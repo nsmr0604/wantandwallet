@@ -24,18 +24,22 @@
       <div class="h-full bg-emerald-500" style="width: {rate}%"></div>
     </div>
 
-    <div class="mt-2 grid grid-cols-3 gap-2 text-center">
+    <div class="mt-2 grid grid-cols-2 gap-2 text-center">
       <div class="rounded-lg bg-slate-50 py-2">
         <p class="text-[10px] text-slate-500">使用</p>
-        <p class="text-[13px] font-bold text-slate-900">{yen(budget.spent)}</p>
+        <p class="text-[13px] font-bold text-slate-900">{money(budget.spent)}</p>
       </div>
       <div class="rounded-lg bg-emerald-50 py-2">
         <p class="text-[10px] text-emerald-700">残り</p>
-        <p class="text-[13px] font-bold text-emerald-800">{yen(remaining)}</p>
+        <p class="text-[13px] font-bold text-emerald-800">{money(remaining)}</p>
+      </div>
+      <div class="rounded-lg bg-amber-50 py-2">
+        <p class="text-[10px] text-amber-800">予約枠（未払）</p>
+        <p class="text-[13px] font-bold text-amber-900">{money(budget.reserved)}</p>
       </div>
       <div class="rounded-lg bg-slate-50 py-2">
         <p class="text-[10px] text-slate-500">1日あたり</p>
-        <p class="text-[13px] font-bold text-slate-900">{yen(perDay)}</p>
+        <p class="text-[13px] font-bold text-slate-900">{money(perDay)}</p>
       </div>
     </div>
   </div>

@@ -26,33 +26,30 @@
 
   <ul class="space-y-2">
     {#each searchResults as r (r.name)}
-      <li class="rounded-xl bg-white border border-slate-200 p-3">
-        <p class="text-[13px] font-bold text-slate-900">{r.name}</p>
-        <div class="mt-2 flex flex-wrap gap-1.5">
-          {#each r.codes as c (c)}
-            <button
-              class="h-7 px-2 rounded-lg border text-[10px] font-medium"
-              class:border-slate-200={c === '—'}
-              class:bg-slate-50={c === '—'}
-              class:text-slate-400={c === '—'}
-              class:border-emerald-300={c !== '—'}
-              class:bg-emerald-50={c !== '—'}
-              class:text-emerald-800={c !== '—'}
-              onclick={() => go('wish')}
-            >
-              {c}
-            </button>
-          {/each}
+      <li class="rounded-xl bg-white border border-slate-200 p-3 flex items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="text-[13px] font-bold text-slate-900 truncate">{r.name}</p>
+          <p class="text-[10px] text-slate-500">{r.type}</p>
         </div>
+        <button
+          class="shrink-0 h-9 px-3 rounded-lg bg-emerald-600 text-white text-[11px] font-bold"
+          onclick={() => go('wish')}
+        >
+          ＋ 追加
+        </button>
       </li>
     {/each}
   </ul>
 
+  <p class="px-1 text-[10px] text-slate-400">
+    再録・イラスト違いは同じカードとして 1 件にまとまります。型番の選択はありません。
+  </p>
+
   <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
     <p class="text-[11px] font-bold text-amber-900">この画面の確認ポイント（S0）</p>
     <ul class="mt-1 text-[11px] text-amber-900 list-disc pl-4 space-y-0.5">
-      <li>型番を選ぶ操作が小さすぎないか（タップ領域 44px 未満）</li>
-      <li>同じカードの再録が並んだとき、どれを選ぶか迷わないか</li>
+      <li>「追加」が親指で押せる位置・大きさか</li>
+      <li>同名の別カードが並んだとき区別できるか</li>
       <li>手入力への逃げ道が見つけられるか</li>
     </ul>
   </div>

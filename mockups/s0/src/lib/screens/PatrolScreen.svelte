@@ -53,9 +53,14 @@
 
   <!-- 対象カード -->
   <div class="rounded-2xl bg-white border border-slate-200 p-4">
-    <p class="text-[10px] text-slate-500">{item.code} / {item.rarity}・残り {item.wanted - item.bought} 枚</p>
+    <p class="text-[10px] text-slate-500">残り {item.wanted - item.bought} 枚</p>
     <p class="mt-0.5 text-[17px] font-bold text-slate-900 leading-snug">{item.name}</p>
-    <p class="mt-1 text-[11px] text-slate-500">目標 {yen(item.target)}</p>
+    <div class="mt-1.5 flex items-center gap-2">
+      <button class="h-7 px-2 rounded-md border border-slate-300 text-[10px] font-medium text-slate-600">
+        レアリティ: 指定なし（任意）
+      </button>
+      <p class="ml-auto text-[11px] text-slate-500">目標 {yen(item.target)}</p>
+    </div>
   </div>
 
   <!-- 価格表示 -->

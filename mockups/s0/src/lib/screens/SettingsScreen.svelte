@@ -3,9 +3,10 @@
 
   const rows = [
     { label: '月次予算', value: '¥10,000', to: 'budget' },
+    { label: '1BOX のパック数（既定）', value: '30 パック', to: 'releases' },
+    { label: 'リマインダー', value: '7 日前', to: 'releases' },
     { label: 'カテゴリ配分', value: '新弾 / シングル / グッズ / その他', to: 'budget' },
     { label: '店舗', value: '3 件', to: 'patrol' },
-    { label: '新弾の取り込み', value: '最終 2026/11/27', to: 'releases' },
   ];
 </script>
 

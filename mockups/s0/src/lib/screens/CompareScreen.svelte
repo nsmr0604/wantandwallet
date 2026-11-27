@@ -13,21 +13,23 @@
     <button class="shrink-0 h-8 px-3 rounded-full bg-white border border-slate-200 text-[11px] text-slate-600">通販を含む</button>
   </div>
 
-  {#each compareRows as row (row.code)}
+  {#each compareRows as row (row.name)}
     <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden">
       <div class="px-3 pt-3 pb-2">
         <p class="text-[13px] font-bold text-slate-900">{row.name}</p>
-        <p class="text-[10px] text-slate-500">{row.code} / {row.rarity}</p>
+        <p class="text-[10px] text-slate-500">レアリティは参考表示（価格はカード単位で比較）</p>
       </div>
       <ul class="divide-y divide-slate-100 border-t border-slate-100">
         {#each row.prices as p (p.store)}
           <li class="px-3 py-2 flex items-center gap-2" class:bg-emerald-50={p.price === best(row.prices) && p.price > 0}>
             <span class="text-[11px] text-slate-600 flex-1 truncate">{p.store}</span>
-            {#if p.price === best(row.prices) && p.price > 0}
-              <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">最安</span>
+            {#if p.rarity}
+              <span class="text-[9px] font-medium text-slate-500 border border-slate-200 rounded px-1">{p.rarity}</span>
             {/if}
             {#if p.stock === 0}
               <span class="text-[10px] text-slate-400">在庫なし</span>
+            {:else if p.price === best(row.prices)}
+              <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">最安</span>
             {/if}
             <span class="text-[13px] font-bold" class:text-emerald-800={p.price === best(row.prices) && p.price > 0} class:text-slate-900={p.price !== best(row.prices)}>
               {yen(p.price)}

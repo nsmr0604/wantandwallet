@@ -21,3 +21,6 @@ Thumbs.db
 *.local
 .env
 .env.*
+
+# 個人ナレッジ（OKF・非公開）
+knowledge/

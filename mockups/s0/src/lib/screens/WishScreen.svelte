@@ -38,7 +38,9 @@
           </span>
           <div class="min-w-0 flex-1">
             <p class="text-[13px] font-bold text-slate-900 truncate">{w.name}</p>
-            <p class="text-[10px] text-slate-500">{w.code} / {w.rarity}</p>
+            <p class="text-[10px] text-slate-500">
+              {w.rarity ? `レアリティ: ${w.rarity}` : 'レアリティ: 指定なし（任意）'}
+            </p>
           </div>
           <button class="text-slate-400" aria-label="メニュー">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>

@@ -42,7 +42,24 @@
       </span>
     </div>
     <p class="mt-1 text-[13px] font-bold text-slate-900 leading-snug">{next.name}</p>
-    <p class="mt-0.5 text-[11px] text-slate-500">2026/12/19（土）・{next.kind}</p>
+    <p class="mt-0.5 text-[11px] text-slate-500">
+      2026/12/19（土）・{next.kind}
+      {#if next.msrpPack}・1パック ¥{next.msrpPack.toLocaleString('ja-JP')}{/if}
+      {#if next.msrpBox}・1BOX ¥{next.msrpBox.toLocaleString('ja-JP')}{/if}
+    </p>
+  </button>
+
+  <!-- 予約中 -->
+  <button
+    class="w-full text-left rounded-2xl bg-amber-50 border border-amber-200 p-4"
+    onclick={() => go('purchase')}
+  >
+    <div class="flex items-center justify-between">
+      <p class="text-[11px] font-bold text-amber-900">予約中 1 件</p>
+      <span class="text-[10px] text-amber-800">12/19 発売</span>
+    </div>
+    <p class="mt-1 text-[12px] font-bold text-amber-950">PRIDE AND SOUL・1BOX</p>
+    <p class="text-[10px] text-amber-800">秋葉原 A 店・¥5,940</p>
   </button>
 
   <!-- 欲しいリスト -->
@@ -62,7 +79,7 @@
           ></span>
           <div class="min-w-0">
             <p class="text-[13px] font-medium text-slate-900 truncate">{w.name}</p>
-            <p class="text-[10px] text-slate-500">{w.code} / {w.rarity}</p>
+            <p class="text-[10px] text-slate-500">{w.rarity || 'レアリティ指定なし'}</p>
           </div>
           <div class="ml-auto text-right">
             <p class="text-[11px] text-slate-500">残り {w.wanted - w.bought} 枚</p>
@@ -103,7 +120,7 @@
             <p class="text-[12px] text-slate-900 truncate">{p.name} ×{p.qty}</p>
             <p class="text-[10px] text-slate-500">{p.store}</p>
           </div>
-          <p class="ml-auto text-[12px] font-bold text-slate-900">{yen(p.unit * p.qty + p.shipping)}</p>
+          <p class="ml-auto text-[12px] font-bold text-slate-900">{yen(p.unitPrice * p.qty + p.shipping)}</p>
         </li>
       {/each}
     </ul>
