@@ -1,5 +1,6 @@
 <script>
   import { shop, selectedEntry, markPurchased, deleteEntry, draftFromEntry, sealedSummary, entryTotal } from '../store.svelte.js';
+  import { rarityLabel } from '../rarity.js';
   import { money } from '../sample.js';
 
   let { go } = $props();
@@ -31,7 +32,7 @@
       <span class="text-[10px] text-slate-500">{sealedSummary(e)}・{e.category}</span>
     </div>
     <p class="mt-1.5 text-[17px] font-bold text-slate-900 leading-snug">{e.name}</p>
-    <p class="text-[11px] text-slate-500">{e.store || '店舗なし'}{e.rarity ? ' / ' + e.rarity : ''}</p>
+    <p class="text-[11px] text-slate-500">{e.store || '店舗なし'}{e.rarity ? ' / ' + rarityLabel(e.rarity) : ''}</p>
 
     <dl class="mt-3 divide-y divide-slate-100 border-t border-slate-100">
       <div class="py-1.5 flex justify-between text-[11px]"><dt class="text-slate-500">単価</dt><dd class="text-slate-900">{money(e.unitPrice)}</dd></div>

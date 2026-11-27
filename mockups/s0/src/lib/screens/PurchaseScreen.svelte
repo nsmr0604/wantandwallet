@@ -1,5 +1,6 @@
 <script>
   import { shop, setTab, openDetail, markPurchased, entryTotal, blankDraft, sealedSummary } from '../store.svelte.js';
+  import { rarityLabel } from '../rarity.js';
   import { money } from '../sample.js';
 
   let { go } = $props();
@@ -73,7 +74,7 @@
             <div class="min-w-0 flex-1">
               <p class="text-[13px] font-bold text-slate-900 truncate">{e.name}</p>
               <p class="text-[10px] text-slate-500">
-                {sealedSummary(e)}{e.rarity ? ' / ' + e.rarity : ''}・{e.store || '店舗なし'}
+                {sealedSummary(e)}{e.rarity ? ' / ' + rarityLabel(e.rarity) : ''}・{e.store || '店舗なし'}
               </p>
             </div>
             <div class="text-right">

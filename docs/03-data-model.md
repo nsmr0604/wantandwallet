@@ -79,7 +79,7 @@ Setting（単一レコード）
 | qtyWanted | number | | 欲しい枚数（1 以上） |
 | priority | 1 \| 2 \| 3 | index | 1=高, 2=中, 3=低 |
 | targetPrice | number? | | 目標単価（円） |
-| rarity | string? | | 希望レアリティ（表示用） |
+| rarity | string? | | 希望レアリティ（固定リストのコード。任意） |
 | memo | string? | | |
 | createdAt | number | index | |
 | updatedAt | number | | |
@@ -230,6 +230,24 @@ Setting（単一レコード）
 | lastExportAt | number? | 最終エクスポート日時 |
 | installHintDismissed | boolean | ホーム画面追加案内の再表示制御 |
 | updatedAt | number | |
+
+## 3.11 `rarities`（固定リスト・Enum）
+
+| コード | 表示 | 備考 |
+| --- | --- | --- |
+| （空） | 指定なし | 既定。比較・集計はカード単位 |
+| N | ノーマル | |
+| R | レア | |
+| SR | スーパーレア | |
+| UR | ウルトラレア | |
+| UL | アルティメットレア | |
+| SE | シークレットレア | |
+| PSER | プリズマティックシークレットレア | |
+| CR | コレクターズレア | |
+| HR | ホログラフィックレア | |
+| PR | パラレルレア | |
+
+**除外**: 20th シークレットレア、ゴールドレア、プレミアムゴールドレア、ミレニアムレア、エクストラシークレットレア等の**期間限定・特定商品限定**のレアリティ。商品・年で意味が変わるため、恒常リストには入れない。将来必要になったら `rarities` を追加するか、メモ欄で補う。
 
 # 4. Dexie スキーマ（v1 案）
 

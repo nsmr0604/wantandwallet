@@ -1,5 +1,6 @@
 <script>
   import { shop, saveDraft, wishNames, productOptions, selectProduct, recalcSealed, setSealedMode } from '../store.svelte.js';
+  import { RARITIES } from '../rarity.js';
   import { money } from '../sample.js';
 
   let { go } = $props();
@@ -112,6 +113,18 @@
         {/each}
       </div>
       <p class="mt-1.5 text-[10px] text-slate-400">欲しいリストから選ぶと単価の初期値が入ります。「ストレージ」は店頭のストレージ（投げ売り）用。</p>
+
+      <label class="mt-2 block">
+        <span class="text-[10px] text-slate-500">レアリティ（任意）</span>
+        <select
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 bg-white text-[12px] outline-none focus:border-emerald-500"
+          bind:value={draft.rarity}
+        >
+          {#each RARITIES as r (r.value)}
+            <option value={r.value}>{r.label}</option>
+          {/each}
+        </select>
+      </label>
     </div>
 
     <div class="rounded-xl bg-white border border-slate-200 p-3 space-y-2">

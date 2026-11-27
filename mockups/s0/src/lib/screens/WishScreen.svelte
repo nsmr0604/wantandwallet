@@ -1,6 +1,7 @@
 <script>
   import { compareRows, yen, money } from '../sample.js';
   import { shop, wishBought, wishRemaining, updateWish, removeWish, draftFromCard } from '../store.svelte.js';
+  import { RARITIES, rarityLabel } from '../rarity.js';
 
   let { go } = $props();
 
@@ -154,7 +155,7 @@
             </span>
             <div class="min-w-0 flex-1">
               <p class="text-[13px] font-bold text-slate-900 truncate">{w.name}</p>
-              <p class="text-[10px] text-slate-500">{w.rarity ? `レアリティ: ${w.rarity}` : 'レアリティ: 指定なし'}</p>
+              <p class="text-[10px] text-slate-500">{w.rarity ? `レアリティ: ${rarityLabel(w.rarity)}` : 'レアリティ: 指定なし'}</p>
             </div>
             <button class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400" aria-label="編集" onclick={() => openEdit(w)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="m14 6 4 4" /></svg>
@@ -259,7 +260,15 @@
 
       <label class="block">
         <span class="text-[10px] text-slate-500">レアリティ（任意）</span>
-        <input class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]" placeholder="例: UR / シークレット" bind:value={editing.rarity} />
+        <select
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 bg-white text-[12px] outline-none focus:border-emerald-500"
+          bind:value={editing.rarity}
+        >
+          {#each RARITIES as r (r.value)}
+            <option value={r.value}>{r.label}</option>
+          {/each}
+        </select>
+        <span class="mt-0.5 block text-[9px] text-slate-400">期間限定（20th・ゴールド等）は含みません</span>
       </label>
 
       <label class="block">

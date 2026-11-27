@@ -22,7 +22,7 @@ export const wishItems = [
   },
   {
     id: 3, name: '墓穴の指名者', kana: 'はかあなのしめいしゃ', group: 'trap',
-    typeLabel: '罠カード（通常）', rarity: 'UR 希望', wanted: 1, bought: 0, target: 1500, priority: 2,
+    typeLabel: '罠カード（通常）', rarity: 'UR', wanted: 1, bought: 0, target: 1500, priority: 2,
   },
   {
     id: 4, name: 'エフェクト・ヴェーラー', kana: 'えふぇくとゔぇーらー', group: 'monster',
