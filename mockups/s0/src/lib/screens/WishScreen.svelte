@@ -74,13 +74,25 @@
   };
 
   const openPrice = (w) => {
+    const best = bestPrice(w.name);
     priceEditing = {
       name: w.name,
-      store: stores[0].name,
-      rarity: '',
-      price: bestPrice(w.name)?.price ?? 0,
+      store: best?.store ?? stores[0].name,
+      rarity: best?.rarity ?? '',
+      price: best?.price ?? 0,
     };
   };
+
+  // 選択中の店舗に登録済みのレアリティ（タップで編集）
+  const existingAtStore = $derived(
+    priceEditing
+      ? latestPrices(priceEditing.name).filter((p) => p.store === priceEditing.store)
+      : [],
+  );
+
+  const isUpdate = $derived(
+    !!priceEditing && existingAtStore.some((p) => p.rarity === priceEditing.rarity),
+  );
 
   const savePrice = () => {
     if (!priceEditing) return;
@@ -208,6 +220,9 @@
                   <li class="flex items-center gap-1.5 text-[10px]">
                     <span class="text-slate-600 truncate">{g.store}</span>
                     <span class="text-[8px] text-slate-500 border border-slate-200 rounded px-1 shrink-0">{rarityLabel(g.list[0].rarity)}</span>
+                    {#if g.list.length > 1}
+                      <span class="text-[8px] text-slate-400 shrink-0">+{g.list.length - 1}</span>
+                    {/if}
                     <span class="ml-auto font-bold shrink-0" class:text-emerald-700={best && g.cheapest === best.price} class:text-slate-800={!best || g.cheapest !== best.price}>{yen(g.cheapest)}</span>
                   </li>
                 {/each}
@@ -342,6 +357,25 @@
         </div>
       </div>
 
+      {#if existingAtStore.length}
+        <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+          <p class="text-[9px] text-slate-500">この店舗の登録済み（タップで編集）</p>
+          <div class="mt-1 flex flex-wrap gap-1">
+            {#each existingAtStore as p (p.id)}
+              <button
+                class="h-7 px-1.5 rounded-md border text-[9px] font-medium"
+                class:border-emerald-400={priceEditing.rarity === p.rarity} class:bg-emerald-50={priceEditing.rarity === p.rarity}
+                class:border-slate-200={priceEditing.rarity !== p.rarity} class:bg-white={priceEditing.rarity !== p.rarity}
+                onclick={() => { priceEditing.rarity = p.rarity; priceEditing.price = p.price; }}
+              >
+                {rarityLabel(p.rarity)} {yen(p.price)}
+              </button>
+            {/each}
+          </div>
+          <p class="mt-1 text-[9px] text-slate-400">同じ店舗でもレアリティごとに別の価格を持てます</p>
+        </div>
+      {/if}
+
       <label class="block">
         <span class="text-[10px] text-slate-500">レアリティ（任意）</span>
         <select
@@ -364,10 +398,12 @@
           キャンセル
         </button>
         <button class="h-11 rounded-xl bg-emerald-600 text-white text-[12px] font-bold" onclick={savePrice}>
-          登録する
+          {isUpdate ? '更新する' : '登録する'}
         </button>
       </div>
-      <p class="text-[9px] text-slate-400">同じ店舗の価格は上書きせず、最新の記録として残ります。</p>
+      <p class="text-[9px] text-slate-400">
+        {isUpdate ? '同じ店舗・同じレアリティの価格を最新として更新します。' : '同じ店舗・別のレアリティとして追加します。'}
+      </p>
     </div>
   </div>
 {/if}

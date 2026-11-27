@@ -55,6 +55,7 @@ export const compareRows = [
     name: '灰流うらら',
     prices: [
       { store: '秋葉原 A 店', price: 1180, rarity: 'UR', stock: 1 },
+      { store: '秋葉原 A 店', price: 520, rarity: 'SR', stock: 1 },
       { store: '秋葉原 B 店', price: 1280, rarity: 'UR', stock: 1 },
       { store: 'カード通販 C', price: 1050, rarity: 'UR', stock: 1 },
     ],
