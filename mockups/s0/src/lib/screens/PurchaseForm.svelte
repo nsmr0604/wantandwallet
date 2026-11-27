@@ -24,6 +24,10 @@
       draft.name = '';
       draft.unitPrice = 0;
       draft.unitMode = 'pack';
+      // シングルに予約は無い
+      draft.status = 'bought';
+      draft.reservedAt = '';
+      draft.expectedAt = '';
     } else {
       draft.itemType = 'sealed';
       draft.unit = 'pack';
@@ -35,10 +39,11 @@
     }
   };
 
-  const pickCard = (name) => {
+  const pickCard = (name, price) => {
     if (!draft) return;
     draft.name = name;
-    if (!draft.unitPrice) draft.unitPrice = 1180;
+    if (price) draft.unitPrice = price;
+    else if (!draft.unitPrice && name === 'ストレージ') draft.unitPrice = 0;
   };
 
   const onProduct = (e) => {
@@ -96,11 +101,17 @@
         bind:value={draft.name}
       />
       <div class="mt-2 flex flex-wrap gap-1.5">
+        <button
+          class="h-7 px-2 rounded-lg border border-slate-300 bg-slate-100 text-[10px] font-bold text-slate-700"
+          onclick={() => pickCard('ストレージ')}
+        >
+          ストレージ
+        </button>
         {#each wishNames.slice(0, 4) as n (n)}
-          <button class="h-7 px-2 rounded-lg border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => pickCard(n)}>{n}</button>
+          <button class="h-7 px-2 rounded-lg border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => pickCard(n, 1180)}>{n}</button>
         {/each}
       </div>
-      <p class="mt-1.5 text-[10px] text-slate-400">欲しいリストから選ぶと単価の初期値が入ります（後で変更可）</p>
+      <p class="mt-1.5 text-[10px] text-slate-400">欲しいリストから選ぶと単価の初期値が入ります。「ストレージ」は店頭のストレージ（投げ売り）用。</p>
     </div>
 
     <div class="rounded-xl bg-white border border-slate-200 p-3 space-y-2">
@@ -271,24 +282,26 @@
     </div>
   </div>
 
-  <!-- 予約 -->
-  <button
-    class="w-full rounded-xl border p-3 flex items-center gap-3 text-left"
-    class:border-amber-300={draft.status === 'reserved'} class:bg-amber-50={draft.status === 'reserved'}
-    class:border-slate-200={draft.status !== 'reserved'} class:bg-white={draft.status !== 'reserved'}
-    onclick={toggleReserve}
-  >
-    <span class="w-5 h-5 rounded-md border-2 flex items-center justify-center" class:border-amber-700={draft.status === 'reserved'} class:border-slate-300={draft.status !== 'reserved'}>
-      {#if draft.status === 'reserved'}<span class="w-2.5 h-2.5 rounded-sm bg-amber-700"></span>{/if}
-    </span>
-    <span>
-      <span class="block text-[12px] font-bold text-slate-800">予約として記録する</span>
-      <span class="block text-[10px] text-slate-500">
-        予約中は購入済みと別に集計。残額からは差し引かれます
-        {#if draft.expectedAt}・{draft.expectedAt.replaceAll('-', '/')} 発売{/if}
+  <!-- 予約（パック/BOX のみ） -->
+  {#if kind === 'sealed'}
+    <button
+      class="w-full rounded-xl border p-3 flex items-center gap-3 text-left"
+      class:border-amber-300={draft.status === 'reserved'} class:bg-amber-50={draft.status === 'reserved'}
+      class:border-slate-200={draft.status !== 'reserved'} class:bg-white={draft.status !== 'reserved'}
+      onclick={toggleReserve}
+    >
+      <span class="w-5 h-5 rounded-md border-2 flex items-center justify-center" class:border-amber-700={draft.status === 'reserved'} class:border-slate-300={draft.status !== 'reserved'}>
+        {#if draft.status === 'reserved'}<span class="w-2.5 h-2.5 rounded-sm bg-amber-700"></span>{/if}
       </span>
-    </span>
-  </button>
+      <span>
+        <span class="block text-[12px] font-bold text-slate-800">予約として記録する</span>
+        <span class="block text-[10px] text-slate-500">
+          予約中は購入済みと別に集計。残額からは差し引かれます
+          {#if draft.expectedAt}・{draft.expectedAt.replaceAll('-', '/')} 発売{/if}
+        </span>
+      </span>
+    </button>
+  {/if}
 
   <!-- 合計 -->
   <div class="rounded-xl bg-slate-900 text-white p-3 flex items-baseline justify-between">
