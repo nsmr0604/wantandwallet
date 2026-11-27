@@ -178,9 +178,19 @@
           <button class="w-8 h-9 rounded-lg border border-slate-300 text-[14px] font-bold text-slate-600" onclick={() => setQty(qty + 1)}>＋</button>
         </div>
         <div class="mt-1.5 flex flex-wrap gap-1.5">
-          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(1)}>1</button>
-          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(2)}>2</button>
-          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(3)}>3</button>
+          {#each [1, 2, 3] as n (n)}
+            <button
+              class="h-7 px-2 rounded-md border text-[10px] font-bold"
+              class:border-emerald-300={mode === 'box' && qty === n} class:bg-emerald-50={mode === 'box' && qty === n}
+              class:text-emerald-800={mode === 'box' && qty === n}
+              class:border-slate-200={!(mode === 'box' && qty === n)} class:bg-slate-50={!(mode === 'box' && qty === n)}
+              class:text-slate-600={!(mode === 'box' && qty === n)}
+              disabled={!draft.msrpBox}
+              onclick={() => { setSealedMode('box'); setQty(n); }}
+            >
+              {n}BOX
+            </button>
+          {/each}
         </div>
         <p class="mt-1.5 text-[11px] font-bold" class:text-emerald-700={mode === 'box'} class:text-slate-700={mode !== 'box'}>
           {#if qty === 0}
