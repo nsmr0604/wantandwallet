@@ -1,9 +1,19 @@
 <script>
   import { budget, money } from '../sample.js';
+  import { shop, entryTotal } from '../store.svelte.js';
   let { go } = $props();
 
-  const spent = $derived(budget.spent);
-  const reserved = $derived(budget.reserved);
+  const keyOf = { シングル: 'single', 新弾: 'newset', グッズ: 'goods', その他: 'other' };
+  const bought = $derived(shop.entries.filter((e) => e.status === 'bought'));
+  const reservedEntries = $derived(shop.entries.filter((e) => e.status === 'reserved'));
+  const spent = $derived(bought.reduce((s, e) => s + entryTotal(e), 0));
+  const reserved = $derived(reservedEntries.reduce((s, e) => s + entryTotal(e), 0));
+  const categories = $derived(
+    budget.categories.map((c) => ({
+      ...c,
+      spent: bought.filter((e) => keyOf[e.category] === c.key).reduce((s, e) => s + entryTotal(e), 0),
+    })),
+  );
   const committed = $derived(spent + reserved);
   // 残り = 上限 − 購入 − 予約（予約も残枠を消費する）
   const remaining = $derived(budget.limit - committed);
@@ -69,7 +79,7 @@
   <div class="rounded-2xl bg-white border border-slate-200 p-4">
     <p class="text-[11px] font-bold text-slate-500">カテゴリ別（購入済みのみ）</p>
     <ul class="mt-2 space-y-2.5">
-      {#each budget.categories as c (c.key)}
+      {#each categories as c (c.key)}
         <li>
           <div class="flex items-baseline justify-between text-[11px]">
             <span class="font-medium text-slate-700">{c.label}</span>
@@ -87,7 +97,7 @@
       {/each}
     </ul>
     <p class="mt-2 text-[10px] text-slate-400">
-      配分の合計 {money(budget.categories.reduce((s, c) => s + c.allocation, 0))}（上限と一致）。予約は総額の予約枠に含みます。
+      配分の合計 {money(categories.reduce((s, c) => s + c.allocation, 0))}（上限と一致）。予約は総額の予約枠に含みます。
     </p>
   </div>
 

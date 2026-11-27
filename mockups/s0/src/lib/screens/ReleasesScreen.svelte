@@ -1,5 +1,6 @@
 <script>
   import { releases, money } from '../sample.js';
+  import { draftFromRelease } from '../store.svelte.js';
   let { go } = $props();
 
   const upcoming = $derived(releases.filter((r) => r.days >= 0).sort((a, b) => a.days - b.days));
@@ -46,7 +47,7 @@
           </div>
           <div class="shrink-0 text-right">
             <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">あと {r.days} 日</span>
-            <button class="mt-2 block w-full h-8 px-2 rounded-lg border border-emerald-600 text-[10px] font-bold text-emerald-700" onclick={() => go('purchase')}>
+            <button class="mt-2 block w-full h-8 px-2 rounded-lg border border-emerald-600 text-[10px] font-bold text-emerald-700" onclick={() => { draftFromRelease(r, r.msrpBox ? 'box' : 'pack'); go('purchase-form'); }}>
               予約する
             </button>
           </div>

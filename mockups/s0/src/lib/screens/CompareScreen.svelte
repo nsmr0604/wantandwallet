@@ -1,9 +1,16 @@
 <script>
   import { compareRows, yen } from '../sample.js';
+  import { draftFromCard } from '../store.svelte.js';
   let { go } = $props();
 
   const best = (prices) => Math.min(...prices.filter((p) => p.price > 0).map((p) => p.price));
   const bestStore = (prices) => prices.find((p) => p.price === best(prices));
+
+  const record = (row) => {
+    const b = bestStore(row.prices);
+    draftFromCard({ name: row.name, price: b.price, store: b.store, rarity: b.rarity });
+    go('purchase-form');
+  };
 </script>
 
 <section class="space-y-3">
@@ -41,7 +48,7 @@
         <p class="text-[10px] text-slate-500">
           最安 {bestStore(row.prices).store}・差額 {yen(Math.max(...row.prices.map((p) => p.price)) - best(row.prices))}
         </p>
-        <button class="h-8 px-3 rounded-lg bg-slate-900 text-white text-[11px] font-bold" onclick={() => go('purchase')}>
+        <button class="h-8 px-3 rounded-lg bg-slate-900 text-white text-[11px] font-bold" onclick={() => record(row)}>
           購入を記録
         </button>
       </div>

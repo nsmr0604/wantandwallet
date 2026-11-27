@@ -111,12 +111,15 @@ Setting（単一レコード）
 | 列 | 型 | 制約 | 説明 |
 | --- | --- | --- | --- |
 | id | string | PK | |
-| itemType | `card` \| `sealed` | index | 単品 / シール品 |
-| cardId | string? | FK, index | 単品のとき必須 |
-| releaseId | string? | FK setReleases.id, index | シール品のとき必須 |
-| unit | `single` \| `pack` \| `box` | | 購入単位 |
-| qty | number | | 数量（1 以上） |
-| unitPrice | number | | 単価（円） |
+| itemType | `card` \| `sealed` | index | シングル / パック・BOX |
+| cardId | string? | FK, index | シングルのとき必須 |
+| releaseId | string? | FK setReleases.id, index | シール品で商品が商品マスタにある場合 |
+| productKey | string? | index | 商品名（過去の購入履歴から選んだ場合のフォールバック） |
+| unit | `single` \| `pack` \| `box` | | 購入単位。シール品では `購入パック数` から導出 |
+| qty | number | | 単品=枚数 / シール=ユニット数 |
+| packsPerUnit | number? | | 1 ユニットあたりのパック数（BOX なら当時の `packsPerBox`、パックなら 1） |
+| totalPacks | number? | | 購入パック数（= `qty * packsPerUnit`） |
+| unitPrice | number | | 単価（円）。BOX なら BOX 定価、パックならパック定価 |
 | shipping | number | | 送料（円、既定 0） |
 | total | number | | `qty * unitPrice + shipping`（集計用に保存） |
 | rarity | string? | | 単品の任意ラベル |
@@ -132,6 +135,14 @@ Setting（単一レコード）
 | deletedAt | number? | | |
 
 **索引**: `[purchasedAt+category]`, `[status+expectedAt]`, `cardId`, `releaseId`, `storeId`
+
+**シール品の導出規則**
+
+- 入力は **購入パック数**（`packs`）。`packsPerBox` は商品値 → 設定既定値の順で解決
+- `packs % packsPerBox === 0` なら `unit = box`、`qty = packs / packsPerBox`、`unitPrice = msrpBox`
+- それ以外は `unit = pack`、`qty = packs`、`unitPrice = msrpPack`（BOX 定価が無い商品は常にパック扱い）
+- `packsPerUnit` は購入時点の値を保存（後で設定が変わっても履歴が崩れない）
+- 商品名は**選択式**。候補 = 全 `setReleases`（発売済みを含む）＋ 既存 `purchases.productKey` の重複排除
 
 **集計規則**
 
@@ -246,6 +257,7 @@ db.version(1).stores({
 | `budgetSummary(limit, purchases, categories)` | 支出・予約枠・**残額 = 上限 − 支出 − 予約**・消化率（`(支出+予約)/上限`）・カテゴリ別 |
 | `dueReminders(reminders, today)` | `remindAt <= today` かつ未完了のもの |
 | `packsPerBox(release, settings)` | 商品値 → 設定既定値の順で解決 |
+| `sealedUnit(packs, packsPerBox)` | 購入パック数から `{ unit, qty, totalPacks, packsPerUnit }` を導出。1BOX 分に一致で `box` |
 | `typeGroup(card)` | `cardType` から `monster(1) / extra(2) / spell(3) / trap(4) / other(5)` を導出（融合・シンクロ・エクシーズ・リンクは extra） |
 | `patrolOrder(items, mode)` | `priority`: 優先度昇順→追加順。`typeName`: `typeGroup` → 名前（`nameKana` 優先、`Intl.Collator('ja', {numeric:true})`）の順 |
 | `storeOrder(stores)` | `lastVisitedAt` 降順 → `favorite` 降順 → 名前順。巡回画面のチップはこの順で横スクロール表示 |

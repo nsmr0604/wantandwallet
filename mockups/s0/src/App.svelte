@@ -5,6 +5,8 @@
   import PatrolScreen from './lib/screens/PatrolScreen.svelte';
   import CompareScreen from './lib/screens/CompareScreen.svelte';
   import PurchaseScreen from './lib/screens/PurchaseScreen.svelte';
+  import PurchaseForm from './lib/screens/PurchaseForm.svelte';
+  import PurchaseDetail from './lib/screens/PurchaseDetail.svelte';
   import BudgetScreen from './lib/screens/BudgetScreen.svelte';
   import ReleasesScreen from './lib/screens/ReleasesScreen.svelte';
   import SettingsScreen from './lib/screens/SettingsScreen.svelte';
@@ -14,6 +16,8 @@
     wish: WishScreen,
     patrol: PatrolScreen,
     purchase: PurchaseScreen,
+    'purchase-form': PurchaseForm,
+    'purchase-detail': PurchaseDetail,
     budget: BudgetScreen,
     search: SearchScreen,
     compare: CompareScreen,
@@ -26,6 +30,8 @@
     wish: '欲しいリスト',
     patrol: '巡回モード',
     purchase: '購入',
+    'purchase-form': '購入を記録',
+    'purchase-detail': '購入の詳細',
     budget: '予算',
     search: 'カード検索',
     compare: '比較表',
@@ -51,6 +57,7 @@
 
   const Current = $derived(screens[screen]);
   const title = $derived(meta[screen]);
+  const isSub = $derived(screen === 'purchase-form' || screen === 'purchase-detail');
 
   const go = (id) => {
     screen = id;
@@ -70,6 +77,15 @@
       <!-- ヘッダー -->
       <header class="bg-white/95 backdrop-blur border-b border-slate-200">
       <div class="h-12 px-3 flex items-center gap-2">
+        {#if isSub}
+          <button
+            class="w-9 h-9 -ml-1 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600"
+            aria-label="戻る"
+            onclick={() => go('purchase')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7" /></svg>
+          </button>
+        {/if}
         <h1 class="text-[15px] font-bold text-slate-900 truncate">{title}</h1>
         <div class="ml-auto flex items-center gap-1">
           <button

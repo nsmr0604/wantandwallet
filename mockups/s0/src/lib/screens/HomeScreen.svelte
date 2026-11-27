@@ -1,15 +1,23 @@
 <script>
-  import { budget, wishItems, releases, purchases, yen } from '../sample.js';
+  import { budget, wishItems, releases, yen } from '../sample.js';
+  import { setTab, shop, entryTotal, unitLabel } from '../store.svelte.js';
   let { go } = $props();
 
-  const committed = $derived(budget.spent + budget.reserved);
+  const bought = $derived(shop.entries.filter((e) => e.status === 'bought'));
+  const reservedEntries = $derived(shop.entries.filter((e) => e.status === 'reserved'));
+  const spent = $derived(bought.reduce((s, e) => s + entryTotal(e), 0));
+  const reserved = $derived(reservedEntries.reduce((s, e) => s + entryTotal(e), 0));
+  const firstReserved = $derived(reservedEntries[0]);
+  const recent = $derived([...bought].reverse().slice(0, 2));
+
+  const committed = $derived(spent + reserved);
   // 残り = 上限 − 購入 − 予約（予約も残枠を消費する）
   const remaining = $derived(budget.limit - committed);
   const over = $derived(remaining < 0);
   const rate = $derived(Math.round((committed / budget.limit) * 100));
   const scale = $derived(committed > budget.limit ? budget.limit / committed : 1);
-  const spentPct = $derived((budget.spent / budget.limit) * 100 * scale);
-  const reservedPct = $derived((budget.reserved / budget.limit) * 100 * scale);
+  const spentPct = $derived((spent / budget.limit) * 100 * scale);
+  const reservedPct = $derived((reserved / budget.limit) * 100 * scale);
   const next = $derived(releases.filter((r) => r.days >= 0).sort((a, b) => a.days - b.days)[0]);
   const top = $derived(
     wishItems
@@ -32,7 +40,7 @@
       <div class="h-full bg-amber-300" style="width: {reservedPct}%"></div>
     </div>
     <div class="mt-2 flex justify-between text-[11px] text-slate-300">
-      <span>購入 {yen(budget.spent)} ＋ 予約 {yen(budget.reserved)} / {yen(budget.limit)}</span>
+      <span>購入 {yen(spent)} ＋ 予約 {yen(reserved)} / {yen(budget.limit)}</span>
       <span>{rate}%</span>
     </div>
     {#if over}
@@ -60,17 +68,19 @@
   </button>
 
   <!-- 予約中 -->
-  <button
-    class="w-full text-left rounded-2xl bg-amber-50 border border-amber-200 p-4"
-    onclick={() => go('purchase')}
-  >
-    <div class="flex items-center justify-between">
-      <p class="text-[11px] font-bold text-amber-900">予約中 1 件</p>
-      <span class="text-[10px] text-amber-800">12/19 発売</span>
-    </div>
-    <p class="mt-1 text-[12px] font-bold text-amber-950">PRIDE AND SOUL・1BOX</p>
-    <p class="text-[10px] text-amber-800">秋葉原 A 店・¥5,940</p>
-  </button>
+  {#if firstReserved}
+    <button
+      class="w-full text-left rounded-2xl bg-amber-50 border border-amber-200 p-4"
+      onclick={() => { setTab('reserved'); go('purchase'); }}
+    >
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] font-bold text-amber-900">予約中 {reservedEntries.length} 件</p>
+        <span class="text-[10px] text-amber-800">{firstReserved.expectedAt ? firstReserved.expectedAt.replaceAll('-', '/') + ' 発売' : ''}</span>
+      </div>
+      <p class="mt-1 text-[12px] font-bold text-amber-950 truncate">{firstReserved.name}・{unitLabel[firstReserved.unit]}</p>
+      <p class="text-[10px] text-amber-800">{firstReserved.store}・{yen(entryTotal(firstReserved))}</p>
+    </button>
+  {/if}
 
   <!-- 欲しいリスト -->
   <div class="rounded-2xl bg-white border border-slate-200">
@@ -123,14 +133,14 @@
       <button class="text-[11px] text-slate-500 underline underline-offset-2" onclick={() => go('purchase')}>すべて</button>
     </div>
     <ul class="divide-y divide-slate-100">
-      {#each purchases.slice(0, 2) as p (p.id)}
+      {#each recent as p (p.id)}
         <li class="px-4 py-2.5 flex items-center gap-3">
           <span class="text-[10px] text-slate-400 w-8 shrink-0">{p.date}</span>
           <div class="min-w-0">
             <p class="text-[12px] text-slate-900 truncate">{p.name} ×{p.qty}</p>
             <p class="text-[10px] text-slate-500">{p.store}</p>
           </div>
-          <p class="ml-auto text-[12px] font-bold text-slate-900">{yen(p.unitPrice * p.qty + p.shipping)}</p>
+          <p class="ml-auto text-[12px] font-bold text-slate-900">{yen(entryTotal(p))}</p>
         </li>
       {/each}
     </ul>
