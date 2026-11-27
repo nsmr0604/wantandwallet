@@ -2,8 +2,14 @@
   import { budget, wishItems, releases, purchases, yen } from '../sample.js';
   let { go } = $props();
 
-  const remaining = $derived(budget.limit - budget.spent);
-  const rate = $derived(Math.round((budget.spent / budget.limit) * 100));
+  const committed = $derived(budget.spent + budget.reserved);
+  // 残り = 上限 − 購入 − 予約（予約も残枠を消費する）
+  const remaining = $derived(budget.limit - committed);
+  const over = $derived(remaining < 0);
+  const rate = $derived(Math.round((committed / budget.limit) * 100));
+  const scale = $derived(committed > budget.limit ? budget.limit / committed : 1);
+  const spentPct = $derived((budget.spent / budget.limit) * 100 * scale);
+  const reservedPct = $derived((budget.reserved / budget.limit) * 100 * scale);
   const next = $derived(releases.filter((r) => r.days >= 0).sort((a, b) => a.days - b.days)[0]);
   const top = $derived(
     wishItems
@@ -20,14 +26,18 @@
       <p class="text-[11px] text-slate-300">11月の残り</p>
       <button class="text-[11px] text-slate-300 underline underline-offset-2" onclick={() => go('budget')}>内訳</button>
     </div>
-    <p class="mt-1 text-[32px] font-bold leading-none tracking-tight">{yen(remaining)}</p>
-    <div class="mt-3 h-2 rounded-full bg-white/20 overflow-hidden">
-      <div class="h-full bg-emerald-400" style="width: {rate}%"></div>
+    <p class="mt-1 text-[32px] font-bold leading-none tracking-tight" class:text-rose-300={over}>{yen(remaining)}</p>
+    <div class="mt-3 h-2 flex rounded-full bg-white/20 overflow-hidden">
+      <div class="h-full bg-emerald-400" style="width: {spentPct}%"></div>
+      <div class="h-full bg-amber-300" style="width: {reservedPct}%"></div>
     </div>
     <div class="mt-2 flex justify-between text-[11px] text-slate-300">
-      <span>使用 {yen(budget.spent)} / {yen(budget.limit)}</span>
+      <span>購入 {yen(budget.spent)} ＋ 予約 {yen(budget.reserved)} / {yen(budget.limit)}</span>
       <span>{rate}%</span>
     </div>
+    {#if over}
+      <p class="mt-1 text-[10px] font-bold text-rose-300">予算を {yen(-remaining)} 超過しています</p>
+    {/if}
   </div>
 
   <!-- 新弾 -->

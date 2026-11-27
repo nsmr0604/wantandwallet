@@ -150,7 +150,9 @@ Setting（単一レコード）
 | updatedAt | number | | |
 | deletedAt | number? | | |
 
-**導出値**: `spent`（当月の bought 合計）、`reserved`（当月発売予定の reserved 合計）、`remaining = limit - spent`、`rate = spent / limit`
+**導出値**: `spent`（当月の bought 合計）、`reserved`（当月発売予定の reserved 合計）、**`remaining = limit - spent - reserved`**（予約も残枠を消費する）、`committed = spent + reserved`、`rate = committed / limit`
+
+**表示**: グラフは `spent`（緑）＋ `reserved`（黄）＋ `remaining`（灰）の積み上げ。`remaining < 0` は超過として赤で表示する。
 
 ## 3.7 `budgetCategories`（カテゴリ配分）
 
@@ -241,7 +243,7 @@ db.version(1).stores({
 | `latestPrice(observations)` | `cardId × storeId` ごとの最新値のマップ |
 | `bestStore(latestPrices)` | 最安の店舗と価格。同額なら `favorite` 優先 |
 | `effectiveUnitPrice(purchase, packsPerBox)` | BOX → 1 パック換算、パック → そのまま、単品 → 単価 |
-| `budgetSummary(limit, purchases, categories)` | 支出・予約枠・残額・消化率・カテゴリ別 |
+| `budgetSummary(limit, purchases, categories)` | 支出・予約枠・**残額 = 上限 − 支出 − 予約**・消化率（`(支出+予約)/上限`）・カテゴリ別 |
 | `dueReminders(reminders, today)` | `remindAt <= today` かつ未完了のもの |
 | `packsPerBox(release, settings)` | 商品値 → 設定既定値の順で解決 |
 | `typeGroup(card)` | `cardType` から `monster(1) / extra(2) / spell(3) / trap(4) / other(5)` を導出（融合・シンクロ・エクシーズ・リンクは extra） |

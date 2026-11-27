@@ -1,13 +1,13 @@
 // L1 モック用のサンプルデータ（実データに近い文字列で破綻を確認するためのもの）
 export const budget = {
-  limit: 10000,
+  limit: 12000,
   spent: 5240,
   reserved: 5940,
   categories: [
     { key: 'newset', label: '新弾', allocation: 3000, spent: 2080 },
     { key: 'single', label: 'シングル', allocation: 5000, spent: 3160 },
-    { key: 'goods', label: 'グッズ', allocation: 1500, spent: 0 },
-    { key: 'other', label: 'その他', allocation: 500, spent: 0 },
+    { key: 'goods', label: 'グッズ', allocation: 2500, spent: 0 },
+    { key: 'other', label: 'その他', allocation: 1500, spent: 0 },
   ],
 };
 
@@ -95,7 +95,7 @@ export const purchases = [
 export const reservations = [
   {
     id: 1, name: 'PRIDE AND SOUL', unit: 'box', qty: 1, unitPrice: 5940,
-    store: '秋葉原 A 店', reservedAt: '11/14', expectedAt: '2027-01-23', status: 'reserved',
+    store: '秋葉原 A 店', reservedAt: '11/14', expectedAt: '2027-01-23', status: 'reserved', category: '新弾',
   },
 ];
 
@@ -125,4 +125,4 @@ export const searchResults = [
 ];
 
 export const yen = (n) => (n === 0 ? '—' : '¥' + n.toLocaleString('ja-JP'));
-export const money = (n) => '¥' + Number(n).toLocaleString('ja-JP');
+export const money = (n) => (n < 0 ? '-¥' : '¥') + Math.abs(n).toLocaleString('ja-JP');
