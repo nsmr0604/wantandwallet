@@ -1,6 +1,6 @@
 <script>
-  import { budget, wishItems, releases, yen } from '../sample.js';
-  import { setTab, shop, entryTotal, unitLabel } from '../store.svelte.js';
+  import { budget, releases, yen } from '../sample.js';
+  import { setTab, shop, entryTotal, unitLabel, wishRemaining } from '../store.svelte.js';
   let { go } = $props();
 
   const bought = $derived(shop.entries.filter((e) => e.status === 'bought'));
@@ -20,10 +20,11 @@
   const reservedPct = $derived((reserved / budget.limit) * 100 * scale);
   const next = $derived(releases.filter((r) => r.days >= 0).sort((a, b) => a.days - b.days)[0]);
   const top = $derived(
-    wishItems
-      .filter((w) => w.wanted - w.bought > 0)
-      .sort((a, b) => a.priority - b.priority)
-      .slice(0, 3),
+    shop.wish
+      .filter((w) => wishRemaining(w) > 0)
+      .sort((a, b) => a.priority - b.priority || a.createdAt - b.createdAt)
+      .slice(0, 3)
+      .map((w) => ({ ...w, rem: wishRemaining(w) })),
   );
 </script>
 
@@ -102,7 +103,7 @@
             <p class="text-[10px] text-slate-500">{w.rarity || 'レアリティ指定なし'}</p>
           </div>
           <div class="ml-auto text-right">
-            <p class="text-[11px] text-slate-500">残り {w.wanted - w.bought} 枚</p>
+            <p class="text-[11px] text-slate-500">残り {w.rem} 枚</p>
             <p class="text-[11px] font-bold text-slate-900">目標 {yen(w.target)}</p>
           </div>
         </li>

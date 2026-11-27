@@ -1,5 +1,6 @@
 <script>
   import { searchResults } from '../sample.js';
+  import { addWish } from '../store.svelte.js';
   let { go } = $props();
   let q = $state('うらら');
 </script>
@@ -33,7 +34,7 @@
         </div>
         <button
           class="shrink-0 h-9 px-3 rounded-lg bg-emerald-600 text-white text-[11px] font-bold"
-          onclick={() => go('wish')}
+          onclick={() => { addWish(r.name); go('wish'); }}
         >
           ＋ 追加
         </button>

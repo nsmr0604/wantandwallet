@@ -46,6 +46,20 @@ export const shop = $state({
   tab: 'all',
   draft: null,
   selectedId: null,
+  // 欲しいリスト（モックでは保存しない）
+  wish: wishItems.map((w) => ({
+    id: `w${w.id}`,
+    name: w.name,
+    rarity: w.rarity || '',
+    wanted: w.wanted,
+    target: w.target,
+    priority: w.priority,
+    memo: '',
+    createdAt: w.id,
+  })),
+  wishFilter: 'all',
+  wishSort: 'priority',
+  wishEditingId: null,
   // 設定（モックでは保存しない）
   settings: {
     storagePrice: 30,
@@ -233,6 +247,45 @@ export function markPurchased(id) {
 
 export function deleteEntry(id) {
   shop.entries = shop.entries.filter((e) => e.id !== id);
+}
+
+// --- 欲しいリスト ---
+export function wishBought(name) {
+  return shop.entries
+    .filter((e) => e.status === 'bought' && e.itemType === 'card' && e.name === name)
+    .reduce((s, e) => s + e.qty, 0);
+}
+
+export function wishRemaining(w) {
+  return Math.max(0, w.wanted - wishBought(w.name));
+}
+
+export function addWish(name) {
+  const exists = shop.wish.find((w) => w.name === name);
+  if (exists) return exists;
+  const item = {
+    id: `w${Date.now()}`,
+    name,
+    rarity: '',
+    wanted: 1,
+    target: 0,
+    priority: 2,
+    memo: '',
+    createdAt: 99,
+  };
+  shop.wish.push(item);
+  return item;
+}
+
+export function updateWish(item) {
+  const i = shop.wish.findIndex((w) => w.id === item.id);
+  if (i >= 0) shop.wish[i] = { ...item };
+  shop.wishEditingId = null;
+}
+
+export function removeWish(id) {
+  shop.wish = shop.wish.filter((w) => w.id !== id);
+  shop.wishEditingId = null;
 }
 
 export const entryTotal = (e) => e.unitPrice * e.qty + e.shipping;
