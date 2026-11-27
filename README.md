@@ -29,22 +29,39 @@
 
 ## 現在のステータス
 
-- フェーズ: **S0（基盤）— モック v0.2 提出済み・承認待ち**
-- コード: モックのみ（実装はモック承認後）
-- 進め方: モック承認 → 実装 → 実機評価（[docs/06-process.md](docs/06-process.md)）
+- フェーズ: **S0（基盤）実装済み — S1 準備**
+- 画面設計: S0 モック v0.3 承認済み（`mockups/s0/`）
+- 実装: 画面骨格・ハッシュルーター・Dexie スキーマ・domain 計算・CI・PWA まで
+- 未了: Cloudflare Pages へのデプロイ、実機でのオフライン確認（S0 の残り）
 
-## モックの見方（S0）
+## 開発
 
 ```powershell
-cd mockups/s0
-npm install     # 初回のみ
-npm run dev     # 実機からは http://<PCのIP>:5180
+npm install
+npm run dev      # http://localhost:5173（実機は http://<PCのIP>:5173）
+npm run check    # 型検査（svelte-check）
+npm run test     # 単体テスト（Vitest）
+npm run build    # 本番ビルド（PWA の SW も生成）
+npm run preview  # ビルド成果物の確認
 ```
 
-- 実機（iPhone / Android）のブラウザで開く。PC の縮小表示では判断しない
-- ヘッダー右の ☰ から全 9 画面に切り替えられる（モック専用メニュー）
-- 表示専用。データは保存されない（リロードで初期状態に戻る）
-- 確認観点と未決事項は [docs/07-wireframes-s0.md](docs/07-wireframes-s0.md) §3・§4
+## 構成
+
+```
+src/
+  routes/          9 画面（ホームのみ実データ、他は S1 以降）
+  lib/
+    components/    TabBar / ComingSoon
+    domain/        型・純関数（予算・パック換算・並び順）＋テスト
+    db/            Dexie スキーマ・初期設定
+    repositories/  カード・欲しいリストの入出力
+    router.svelte.ts
+public/            favicon / icon（PWA）
+docs/              仕様・設計（正）
+mockups/s0/        画面設計モック（Svelte・表示専用）
+.github/workflows/ CI（check / test / build）
+```
+
 
 ## ナレッジ
 

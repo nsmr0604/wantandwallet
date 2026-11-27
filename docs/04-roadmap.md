@@ -58,10 +58,10 @@ gantt
 
 **DoD**
 
-- [ ] スマホで URL を開きホーム画面に追加できる
-- [ ] 機内モードで再起動しても画面が出る
-- [ ] `check` / `test` / `build` がローカルと CI で緑
-- [ ] 9 画面の遷移が実機で引っかからない
+- [ ] スマホで URL を開きホーム画面に追加できる（デプロイ後）
+- [ ] 機内モードで再起動しても画面が出る（実機確認）
+- [x] `check` / `test` / `build` がローカルで緑（CI は push で確認）
+- [x] 9 画面の遷移が動作する（ローカル確認）
 
 ## S1 店舗・欲しいカード（12/05 – 12/11）
 
@@ -180,8 +180,8 @@ flowchart LR
 
 1. [x] L0: 全 9 画面の遷移図とワイヤー（`07-wireframes-s0.md`）
 2. [x] L1: `mockups/s0/` の Svelte モック（実機幅・実データ風）
-3. [ ] レビュー: 実機で触り、承認を `05-decisions.md` に記録（Q-09〜Q-13）
-4. [ ] 実装: `npm create vite@latest . -- --template svelte-ts`、Tailwind 4、PWA、ハッシュルーター、9 画面
-5. [ ] Dexie v1 スキーマ＋空の Repository、`monthRange` / `remainingQty` / `effectiveUnitPrice` の単体テスト
-6. [ ] CI（typecheck / test / build）、Cloudflare Pages へデプロイ
+3. [x] レビュー: 承認を `05-decisions.md` に記録（D-38）
+4. [x] 実装: Vite + Svelte 5 + TypeScript、Tailwind 4、PWA、ハッシュルーター、9 画面
+5. [x] Dexie v1 スキーマ＋Repository（カード・欲しい）、domain の単体テスト 18 件
+6. [x] CI（typecheck / test / build） ／ [ ] Cloudflare Pages へデプロイ
 7. [ ] 実機でホーム画面追加 → 機内モード起動を確認（K-01 の初期判定）
