@@ -12,6 +12,8 @@
   const packsPerBox = $derived(Number(draft?.packsPerBox) || 30);
   const totalPacks = $derived(mode === 'box' ? qty * packsPerBox : qty);
   const sealedTotal = $derived(mode === 'box' ? (draft?.msrpBox || 0) * qty : (draft?.msrpPack || 0) * qty);
+  // 遊戯王の日などの参加条件（税込 ¥1,000 以上）を満たす最小パック数
+  const minPacks = $derived(draft?.msrpPack ? Math.ceil(1000 / draft.msrpPack) : 0);
 
   const setKind = (k) => {
     if (!draft) return;
@@ -191,7 +193,21 @@
               {n}BOX
             </button>
           {/each}
+          {#if minPacks > 0}
+            <button
+              class="h-7 px-2 rounded-md border border-amber-300 bg-amber-50 text-[10px] font-bold text-amber-900"
+              title="遊戯王の日など、税込1,000円以上の購入が条件のイベント用"
+              onclick={() => { setSealedMode('pack'); setQty(minPacks); }}
+            >
+              ¥1,000以上: {minPacks}パック
+            </button>
+          {/if}
         </div>
+        {#if minPacks > 0}
+          <p class="mt-1 text-[9px] text-amber-700">
+            遊戯王の日は対象商品 税込¥1,000 以上で参加（{minPacks}パック = {money(minPacks * draft.msrpPack)}）
+          </p>
+        {/if}
         <p class="mt-1.5 text-[11px] font-bold" class:text-emerald-700={mode === 'box'} class:text-slate-700={mode !== 'box'}>
           {#if qty === 0}
             数量を入力してください（1BOX 未満は 0 になります）
