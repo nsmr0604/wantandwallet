@@ -43,7 +43,7 @@
     if (!draft) return;
     draft.name = name;
     if (price) draft.unitPrice = price;
-    else if (!draft.unitPrice && name === 'ストレージ') draft.unitPrice = 0;
+    else if (name === 'ストレージ') draft.unitPrice = shop.settings.storagePrice;
   };
 
   const onProduct = (e) => {

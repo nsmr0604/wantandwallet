@@ -1,4 +1,5 @@
 <script>
+  import { shop } from '../store.svelte.js';
   let { go } = $props();
 
   const rows = [
@@ -19,6 +20,25 @@
         <span class="text-slate-300">›</span>
       </button>
     {/each}
+  </div>
+
+  <div class="rounded-2xl bg-white border border-slate-200 p-4">
+    <p class="text-[11px] font-bold text-slate-500">購入の既定値</p>
+    <div class="mt-2 flex items-center gap-2">
+      <div class="min-w-0 flex-1">
+        <p class="text-[12px] font-medium text-slate-800">ストレージの初期価格</p>
+        <p class="text-[10px] text-slate-500">シングルで「ストレージ」を選んだときの単価</p>
+      </div>
+      <div class="relative shrink-0">
+        <input
+          class="w-20 h-9 pl-2 pr-6 rounded-lg border border-slate-300 text-[13px] text-right outline-none focus:border-emerald-500"
+          type="number"
+          min="0"
+          bind:value={shop.settings.storagePrice}
+        />
+        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">円</span>
+      </div>
+    </div>
   </div>
 
   <div class="rounded-2xl bg-white border border-slate-200 p-4">

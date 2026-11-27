@@ -225,6 +225,7 @@ Setting（単一レコード）
 | defaultPacksPerBox | number | 1BOX のパック数 既定値（既定 30） |
 | patrolSort | `priority` \| `typeName` | 巡回モードの並び順（最後に選んだもの・既定 `priority`） |
 | reminderLeadDays | number | リマインダーを何日前に出すか（既定 7） |
+| storageUnitPrice | number | 「ストレージ」を選んだときの初期単価（既定 30 円） |
 | categoryDefaults | Record<Category, number> | 既定配分比率 |
 | lastExportAt | number? | 最終エクスポート日時 |
 | installHintDismissed | boolean | ホーム画面追加案内の再表示制御 |

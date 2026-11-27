@@ -46,6 +46,10 @@ export const shop = $state({
   tab: 'all',
   draft: null,
   selectedId: null,
+  // 設定（モックでは保存しない）
+  settings: {
+    storagePrice: 30,
+  },
 });
 
 let seq = 100;
