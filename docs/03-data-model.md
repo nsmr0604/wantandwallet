@@ -41,7 +41,7 @@ Setting（単一レコード）
 | passcode | string? | index | 8 桁パスコード（任意） |
 | nameJa | string | index | 日本語名（例: 灰流うらら） |
 | nameNorm | string | **unique** | 検索・一意性用の正規化名（かな化・全半角統一・記号除去） |
-| nameKana | string? | index | 読み（任意。検索補助） |
+| nameKana | string? | index | 読み（任意）。五十音ソートに使う。無ければ `nameJa` を `Intl.Collator('ja')` で比較 |
 | nameEn | string? | | 英語名（参考） |
 | cardType | string? | | モンスター/魔法/罠 等 |
 | text | string? | | 効果テキスト（詳細表示用、必要時のみ） |
@@ -207,6 +207,7 @@ Setting（単一レコード）
 | id | `app` | 固定 |
 | defaultMonthlyLimit | number | 既定の月次予算 |
 | defaultPacksPerBox | number | 1BOX のパック数 既定値（既定 30） |
+| patrolSort | `priority` \| `typeName` | 巡回モードの並び順（最後に選んだもの・既定 `priority`） |
 | reminderLeadDays | number | リマインダーを何日前に出すか（既定 7） |
 | categoryDefaults | Record<Category, number> | 既定配分比率 |
 | lastExportAt | number? | 最終エクスポート日時 |
@@ -242,6 +243,8 @@ db.version(1).stores({
 | `budgetSummary(limit, purchases, categories)` | 支出・予約枠・残額・消化率・カテゴリ別 |
 | `dueReminders(reminders, today)` | `remindAt <= today` かつ未完了のもの |
 | `packsPerBox(release, settings)` | 商品値 → 設定既定値の順で解決 |
+| `typeGroup(card)` | `cardType` から `monster(1) / extra(2) / spell(3) / trap(4) / other(5)` を導出（融合・シンクロ・エクシーズ・リンクは extra） |
+| `patrolOrder(items, mode)` | `priority`: 優先度昇順→追加順。`typeName`: `typeGroup` → 名前（`nameKana` 優先、`Intl.Collator('ja', {numeric:true})`）の順 |
 
 # 6. データ保全
 

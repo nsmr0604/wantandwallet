@@ -12,11 +12,34 @@ export const budget = {
 };
 
 export const wishItems = [
-  { id: 1, name: '灰流うらら', rarity: '', wanted: 2, bought: 1, target: 1200, priority: 1 },
-  { id: 2, name: '増殖するG', rarity: '', wanted: 3, bought: 0, target: 900, priority: 1 },
-  { id: 3, name: '墓穴の指名者', rarity: 'UR 希望', wanted: 1, bought: 0, target: 1500, priority: 2 },
-  { id: 4, name: 'エフェクト・ヴェーラー', rarity: '', wanted: 2, bought: 2, target: 300, priority: 3 },
-  { id: 5, name: '無限泡影', rarity: '', wanted: 2, bought: 0, target: 800, priority: 2 },
+  {
+    id: 1, name: '灰流うらら', kana: 'はるうらら', group: 'monster',
+    typeLabel: 'モンスター（チューナー・効果）', rarity: '', wanted: 2, bought: 1, target: 1200, priority: 1,
+  },
+  {
+    id: 2, name: '増殖するG', kana: 'ぞうしょくするじー', group: 'monster',
+    typeLabel: 'モンスター（効果）', rarity: '', wanted: 3, bought: 0, target: 900, priority: 1,
+  },
+  {
+    id: 3, name: '墓穴の指名者', kana: 'はかあなのしめいしゃ', group: 'trap',
+    typeLabel: '罠カード（通常）', rarity: 'UR 希望', wanted: 1, bought: 0, target: 1500, priority: 2,
+  },
+  {
+    id: 4, name: 'エフェクト・ヴェーラー', kana: 'えふぇくとゔぇーらー', group: 'monster',
+    typeLabel: 'モンスター（チューナー・効果）', rarity: '', wanted: 2, bought: 2, target: 300, priority: 3,
+  },
+  {
+    id: 5, name: '無限泡影', kana: 'むげんほうえい', group: 'trap',
+    typeLabel: '罠カード（通常）', rarity: '', wanted: 2, bought: 0, target: 800, priority: 2,
+  },
+  {
+    id: 6, name: 'ハーピィの羽根帚', kana: 'はーぴぃのはねぼうき', group: 'spell',
+    typeLabel: '魔法カード（通常）', rarity: '', wanted: 1, bought: 0, target: 400, priority: 2,
+  },
+  {
+    id: 7, name: 'アクセスコード・トーカー', kana: 'あくせすこーどとーかー', group: 'extra',
+    typeLabel: 'モンスター（リンク）', rarity: '', wanted: 1, bought: 0, target: 1800, priority: 1,
+  },
 ];
 
 export const stores = [
