@@ -7,6 +7,36 @@
   let index = $state(0);
   let price = $state('1180');
 
+  // 店舗は「最後に訪れた順」。選択するたびに先頭へ来る
+  let visitClock = $state(Math.max(...stores.map((s) => s.lastVisited || 0)));
+  let storeList = $state(stores.map((s) => ({ ...s })));
+  let addOpen = $state(false);
+  let newName = $state('');
+
+  const orderedStores = $derived(
+    [...storeList].sort(
+      (a, b) => (b.lastVisited || 0) - (a.lastVisited || 0) || Number(b.favorite) - Number(a.favorite),
+    ),
+  );
+
+  const selectStore = (id) => {
+    storeId = id;
+    visitClock += 1;
+    const s = storeList.find((x) => x.id === id);
+    if (s) s.lastVisited = visitClock;
+  };
+
+  const addStore = () => {
+    const name = newName.trim();
+    if (!name) return;
+    visitClock += 1;
+    const s = { id: Date.now(), name, kind: 'store', favorite: false, lastVisited: visitClock };
+    storeList.push(s);
+    storeId = s.id;
+    newName = '';
+    addOpen = false;
+  };
+
   const collator = new Intl.Collator('ja', { numeric: true });
   const rank = { monster: 1, extra: 2, spell: 3, trap: 4, other: 5 };
   const groupLabel = { monster: 'モンスター', extra: 'エクストラ', spell: '魔法', trap: '罠', other: 'その他' };
@@ -47,23 +77,52 @@
 <section class="space-y-3">
   <!-- 店舗選択 -->
   <div>
-    <p class="text-[11px] font-bold text-slate-500 mb-1">いまいる店舗</p>
-    <div class="flex gap-1.5 overflow-x-auto pb-1">
-      {#each stores as s (s.id)}
-        <button
-          class="shrink-0 h-9 px-3 rounded-full border text-[11px] font-medium"
-          class:bg-slate-900={storeId === s.id}
-          class:text-white={storeId === s.id}
-          class:border-slate-900={storeId === s.id}
-          class:bg-white={storeId !== s.id}
-          class:text-slate-600={storeId !== s.id}
-          class:border-slate-200={storeId !== s.id}
-          onclick={() => (storeId = s.id)}
-        >
-          {s.name}
-        </button>
-      {/each}
+    <div class="flex items-center justify-between mb-1">
+      <p class="text-[11px] font-bold text-slate-500">いまいる店舗</p>
+      <p class="text-[10px] text-slate-400">最後に訪れた順</p>
     </div>
+    <div class="flex items-center gap-1.5">
+      <div class="relative flex-1 min-w-0">
+        <div class="flex gap-1.5 overflow-x-auto pb-1 pr-4">
+          {#each orderedStores as s (s.id)}
+            <button
+              class="shrink-0 h-9 px-3 rounded-full border text-[11px] font-medium"
+              class:bg-slate-900={storeId === s.id}
+              class:text-white={storeId === s.id}
+              class:border-slate-900={storeId === s.id}
+              class:bg-white={storeId !== s.id}
+              class:text-slate-600={storeId !== s.id}
+              class:border-slate-200={storeId !== s.id}
+              onclick={() => selectStore(s.id)}
+            >
+              {s.name}
+            </button>
+          {/each}
+        </div>
+        <!-- 横スクロールできることを示す右端のフェード -->
+        <div class="pointer-events-none absolute right-0 top-0 h-9 w-6 bg-gradient-to-l from-slate-50 to-transparent"></div>
+      </div>
+      <button
+        class="shrink-0 w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-sm"
+        aria-label="新店舗を追加"
+        onclick={() => (addOpen = !addOpen)}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
+      </button>
+    </div>
+
+    {#if addOpen}
+      <div class="mt-1.5 rounded-xl bg-white border border-slate-200 p-2 flex items-center gap-1.5">
+        <input
+          class="flex-1 min-w-0 h-9 px-2 rounded-lg border border-slate-300 text-[12px] outline-none focus:border-emerald-500"
+          placeholder="店舗名（例: 横浜 F 店）"
+          bind:value={newName}
+          onkeydown={(e) => e.key === 'Enter' && addStore()}
+        />
+        <button class="shrink-0 h-9 px-3 rounded-lg bg-slate-900 text-white text-[11px] font-bold" onclick={addStore}>追加</button>
+        <button class="shrink-0 h-9 px-2 rounded-lg border border-slate-300 text-[11px] text-slate-500" onclick={() => (addOpen = false)}>✕</button>
+      </div>
+    {/if}
   </div>
 
   <!-- 並び順 -->

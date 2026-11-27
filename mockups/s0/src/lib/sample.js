@@ -43,9 +43,11 @@ export const wishItems = [
 ];
 
 export const stores = [
-  { id: 1, name: '秋葉原 A 店', kind: 'store', favorite: true },
-  { id: 2, name: '秋葉原 B 店', kind: 'store', favorite: false },
-  { id: 3, name: 'カード通販 C', kind: 'online', favorite: true },
+  { id: 1, name: '秋葉原 A 店', kind: 'store', favorite: true, lastVisited: 5 },
+  { id: 2, name: '秋葉原 B 店', kind: 'store', favorite: false, lastVisited: 4 },
+  { id: 3, name: 'カード通販 C', kind: 'online', favorite: true, lastVisited: 2 },
+  { id: 4, name: '池袋 D 店', kind: 'store', favorite: false, lastVisited: 3 },
+  { id: 5, name: '新宿 E 店', kind: 'store', favorite: false, lastVisited: 1 },
 ];
 
 export const compareRows = [

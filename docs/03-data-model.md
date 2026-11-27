@@ -64,6 +64,7 @@ Setting（単一レコード）
 | url | string? | | 通販 URL |
 | favorite | number | index | 0/1。並び順上位に固定 |
 | sortOrder | number | | 手動並び順 |
+| lastVisitedAt | number? | index | 最後に巡回モードで選んだ日時（新しい順に並べる） |
 | memo | string? | | |
 | archivedAt | number? | | 使わなくなった店舗 |
 | updatedAt | number | | |
@@ -219,7 +220,7 @@ Setting（単一レコード）
 ```ts
 db.version(1).stores({
   cards:            'id, &nameNorm, passcode, konamiId, deletedAt',
-  stores:           'id, kind, favorite, archivedAt, [deletedAt+name]',
+  stores:           'id, kind, favorite, lastVisitedAt, archivedAt, [deletedAt+name]',
   wishItems:        'id, &cardId, priority, createdAt, deletedAt',
   priceObservations:'id, cardId, storeId, observedAt, [cardId+storeId+observedAt], [storeId+observedAt]',
   purchases:        'id, itemType, cardId, releaseId, storeId, status, purchasedAt, category, [purchasedAt+category], [status+expectedAt]',
@@ -245,6 +246,7 @@ db.version(1).stores({
 | `packsPerBox(release, settings)` | 商品値 → 設定既定値の順で解決 |
 | `typeGroup(card)` | `cardType` から `monster(1) / extra(2) / spell(3) / trap(4) / other(5)` を導出（融合・シンクロ・エクシーズ・リンクは extra） |
 | `patrolOrder(items, mode)` | `priority`: 優先度昇順→追加順。`typeName`: `typeGroup` → 名前（`nameKana` 優先、`Intl.Collator('ja', {numeric:true})`）の順 |
+| `storeOrder(stores)` | `lastVisitedAt` 降順 → `favorite` 降順 → 名前順。巡回画面のチップはこの順で横スクロール表示 |
 
 # 6. データ保全
 
