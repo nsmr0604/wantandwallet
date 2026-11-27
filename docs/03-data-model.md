@@ -138,9 +138,10 @@ Setting（単一レコード）
 
 **シール品の導出規則**
 
-- 入力は **購入パック数**（`packs`）。`packsPerBox` は商品値 → 設定既定値の順で解決
-- `packs % packsPerBox === 0` なら `unit = box`、`qty = packs / packsPerBox`、`unitPrice = msrpBox`
-- それ以外は `unit = pack`、`qty = packs`、`unitPrice = msrpPack`（BOX 定価が無い商品は常にパック扱い）
+- 入力は **単位（パック / BOX）＋数量**。`packsPerBox` は商品値 → 設定既定値の順で解決
+- BOX 選択時: `unit = box`、`qty = 数量`、`totalPacks = qty * packsPerBox`、`unitPrice = msrpBox`
+- パック選択時: `unit = pack`、`totalPacks = qty`、`unitPrice = msrpPack`
+- BOX 定価が無い商品は BOX を選べない（パック固定）。**½BOX など半端な BOX は提供しない**
 - `packsPerUnit` は購入時点の値を保存（後で設定が変わっても履歴が崩れない）
 - 商品名は**選択式**。候補 = 全 `setReleases`（発売済みを含む）＋ 既存 `purchases.productKey` の重複排除
 
@@ -257,7 +258,7 @@ db.version(1).stores({
 | `budgetSummary(limit, purchases, categories)` | 支出・予約枠・**残額 = 上限 − 支出 − 予約**・消化率（`(支出+予約)/上限`）・カテゴリ別 |
 | `dueReminders(reminders, today)` | `remindAt <= today` かつ未完了のもの |
 | `packsPerBox(release, settings)` | 商品値 → 設定既定値の順で解決 |
-| `sealedUnit(packs, packsPerBox)` | 購入パック数から `{ unit, qty, totalPacks, packsPerUnit }` を導出。1BOX 分に一致で `box` |
+| `sealedUnit(packs, packsPerBox)` | 入力（単位＋数量）から `{ unit, qty, totalPacks, packsPerUnit }` を導出。BOX は数量×パック数 |
 | `typeGroup(card)` | `cardType` から `monster(1) / extra(2) / spell(3) / trap(4) / other(5)` を導出（融合・シンクロ・エクシーズ・リンクは extra） |
 | `patrolOrder(items, mode)` | `priority`: 優先度昇順→追加順。`typeName`: `typeGroup` → 名前（`nameKana` 優先、`Intl.Collator('ja', {numeric:true})`）の順 |
 | `storeOrder(stores)` | `lastVisitedAt` 降順 → `favorite` 降順 → 名前順。巡回画面のチップはこの順で横スクロール表示 |

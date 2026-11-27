@@ -14,6 +14,8 @@ const seed = [
     packs: p.unit === 'box' ? 30 : '',
     packsPerUnit: p.unit === 'box' ? 30 : 1,
     totalPacks: p.unit === 'box' ? 30 * p.qty : p.qty,
+    unitMode: p.unit === 'box' ? 'box' : 'pack',
+    quantity: p.qty,
   })),
   ...reservations.map((r) => ({
     id: `r${r.id}`,
@@ -34,6 +36,8 @@ const seed = [
     packs: r.unit === 'box' ? 30 : 1,
     packsPerUnit: r.unit === 'box' ? 30 : 1,
     totalPacks: r.unit === 'box' ? 30 * r.qty : r.qty,
+    unitMode: r.unit === 'box' ? 'box' : 'pack',
+    quantity: r.qty,
   })),
 ];
 
@@ -64,7 +68,9 @@ export function blankDraft(kind = 'single') {
     productKey: '',
     unit: kind,
     qty: 1,
-    packs: kind === 'single' ? '' : 1,
+    unitMode: 'pack',
+    quantity: 1,
+    packs: '',
     packsPerUnit: 1,
     totalPacks: '',
     unitPrice: 0,
@@ -125,28 +131,39 @@ export function selectProduct(product) {
   d.packsPerBox = product.packsPerBox || 30;
   d.expectedAt = product.expectedAt || '';
   d.category = '新弾';
-  if (!d.packs || Number(d.packs) <= 0) d.packs = d.packsPerBox;
+  // BOX 定価が無い商品はパック固定
+  if (!d.msrpBox) d.unitMode = 'pack';
+  if (!d.quantity || Number(d.quantity) <= 0) d.quantity = 1;
   recalcSealed();
 }
 
-// 購入パック数から BOX / パックを導出（1BOX 分に一致したら BOX）
+// 数量（パック数 or BOX 数）から単位とパック数を導出する
 export function recalcSealed() {
   const d = shop.draft;
   if (!d || d.itemType !== 'sealed') return;
-  const packs = Math.max(0, Number(d.packs) || 0);
   const pb = Number(d.packsPerBox) || 30;
-  if (packs > 0 && d.msrpBox && pb > 0 && packs % pb === 0) {
+  const n = Math.max(0, Number(d.quantity) || 0);
+  if (d.unitMode === 'box' && d.msrpBox) {
     d.unit = 'box';
-    d.qty = packs / pb;
     d.packsPerUnit = pb;
+    d.qty = n;
     d.unitPrice = d.msrpBox;
+    d.totalPacks = n * pb;
   } else {
     d.unit = 'pack';
-    d.qty = packs;
     d.packsPerUnit = 1;
+    d.qty = n;
     d.unitPrice = d.msrpPack || 0;
+    d.totalPacks = n;
   }
-  d.totalPacks = packs;
+  d.packs = d.totalPacks;
+}
+
+export function setSealedMode(mode) {
+  const d = shop.draft;
+  if (!d) return;
+  d.unitMode = mode === 'box' && d.msrpBox ? 'box' : 'pack';
+  recalcSealed();
 }
 
 export function draftFromRelease(release, unit = 'box') {
@@ -158,7 +175,8 @@ export function draftFromRelease(release, unit = 'box') {
     packsPerBox: release.packsPerBox ?? null,
     expectedAt: release.date,
   });
-  shop.draft.packs = unit === 'box' ? (release.packsPerBox || 30) : 1;
+  shop.draft.unitMode = unit === 'box' && release.msrpBox ? 'box' : 'pack';
+  shop.draft.quantity = 1;
   recalcSealed();
 }
 

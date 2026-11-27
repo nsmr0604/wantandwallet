@@ -1,5 +1,5 @@
 <script>
-  import { shop, saveDraft, wishNames, productOptions, selectProduct, recalcSealed } from '../store.svelte.js';
+  import { shop, saveDraft, wishNames, productOptions, selectProduct, recalcSealed, setSealedMode } from '../store.svelte.js';
   import { money } from '../sample.js';
 
   let { go } = $props();
@@ -7,15 +7,11 @@
   const draft = $derived(shop.draft);
   const kind = $derived(draft?.itemType === 'sealed' ? 'sealed' : 'single');
   const products = $derived(productOptions());
-  const packs = $derived(Number(draft?.packs) || 0);
+  const mode = $derived(draft?.unitMode || 'pack');
+  const qty = $derived(Number(draft?.quantity) || 0);
   const packsPerBox = $derived(Number(draft?.packsPerBox) || 30);
-  const boxes = $derived(draft?.msrpBox && packs > 0 ? Math.floor(packs / packsPerBox) : 0);
-  const restPacks = $derived(draft?.msrpBox ? packs % packsPerBox : packs);
-  const sealedTotal = $derived(
-    draft?.msrpBox
-      ? boxes * draft.msrpBox + restPacks * (draft.msrpPack || 0)
-      : packs * (draft?.msrpPack || 0),
-  );
+  const totalPacks = $derived(mode === 'box' ? qty * packsPerBox : qty);
+  const sealedTotal = $derived(mode === 'box' ? (draft?.msrpBox || 0) * qty : (draft?.msrpPack || 0) * qty);
 
   const setKind = (k) => {
     if (!draft) return;
@@ -25,14 +21,15 @@
       draft.category = 'シングル';
       draft.name = '';
       draft.unitPrice = 0;
-      draft.packs = '';
+      draft.unitMode = 'pack';
     } else {
       draft.itemType = 'sealed';
       draft.unit = 'pack';
+      draft.unitMode = 'pack';
+      draft.quantity = 1;
       draft.category = '新弾';
       draft.name = '';
       draft.unitPrice = 0;
-      draft.packs = 1;
     }
   };
 
@@ -47,9 +44,9 @@
     if (p) selectProduct(p);
   };
 
-  const setPacks = (n) => {
+  const setQty = (n) => {
     if (!draft) return;
-    draft.packs = Math.max(0, Number(n) || 0);
+    draft.quantity = Math.max(0, Number(n) || 0);
     recalcSealed();
   };
 
@@ -149,30 +146,49 @@
       {/if}
 
       <div class="mt-2">
-        <p class="text-[10px] text-slate-500">購入パック数</p>
-        <div class="mt-0.5 flex items-center gap-1.5">
-          <button class="w-8 h-9 rounded-lg border border-slate-300 text-[14px] font-bold text-slate-600" onclick={() => setPacks(packs - 1)}>−</button>
+        <div class="flex items-center justify-between">
+          <p class="text-[10px] text-slate-500">数量</p>
+          <div class="grid grid-cols-2 gap-0.5 rounded-lg bg-slate-200 p-0.5">
+            <button
+              class="h-7 px-2.5 rounded-md text-[10px] font-bold"
+              class:bg-white={mode === 'pack'} class:text-slate-900={mode === 'pack'} class:text-slate-500={mode !== 'pack'}
+              onclick={() => setSealedMode('pack')}
+            >
+              パック
+            </button>
+            <button
+              class="h-7 px-2.5 rounded-md text-[10px] font-bold disabled:opacity-30"
+              class:bg-white={mode === 'box'} class:text-slate-900={mode === 'box'} class:text-slate-500={mode !== 'box'}
+              disabled={!draft.msrpBox}
+              onclick={() => setSealedMode('box')}
+            >
+              BOX
+            </button>
+          </div>
+        </div>
+        <div class="mt-1 flex items-center gap-1.5">
+          <button class="w-8 h-9 rounded-lg border border-slate-300 text-[14px] font-bold text-slate-600" onclick={() => setQty(qty - 1)}>−</button>
           <input
             class="w-full h-9 text-center rounded-lg border border-slate-300 text-[13px]"
             type="number"
             min="0"
-            value={draft.packs}
-            oninput={(e) => setPacks(e.currentTarget.value)}
+            value={draft.quantity}
+            oninput={(e) => setQty(e.currentTarget.value)}
           />
-          <button class="w-8 h-9 rounded-lg border border-slate-300 text-[14px] font-bold text-slate-600" onclick={() => setPacks(packs + 1)}>＋</button>
+          <button class="w-8 h-9 rounded-lg border border-slate-300 text-[14px] font-bold text-slate-600" onclick={() => setQty(qty + 1)}>＋</button>
         </div>
         <div class="mt-1.5 flex flex-wrap gap-1.5">
-          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setPacks(1)}>1</button>
-          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setPacks(Math.max(1, Math.floor(packsPerBox / 2)))}>½BOX</button>
-          <button class="h-7 px-2 rounded-md border border-emerald-300 bg-emerald-50 text-[10px] font-bold text-emerald-800" onclick={() => setPacks(packsPerBox)}>1BOX（{packsPerBox}）</button>
+          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(1)}>1</button>
+          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(2)}>2</button>
+          <button class="h-7 px-2 rounded-md border border-slate-200 bg-slate-50 text-[10px] text-slate-600" onclick={() => setQty(3)}>3</button>
         </div>
-        <p class="mt-1.5 text-[11px] font-bold" class:text-emerald-700={draft.unit === 'box'} class:text-slate-700={draft.unit !== 'box'}>
-          {#if packs === 0}
-            パック数を入力してください
-          {:else if draft.unit === 'box'}
-            = {draft.qty}BOX（{draft.packsPerUnit}パック）・BOX 定価で計算
+        <p class="mt-1.5 text-[11px] font-bold" class:text-emerald-700={mode === 'box'} class:text-slate-700={mode !== 'box'}>
+          {#if qty === 0}
+            数量を入力してください
+          {:else if mode === 'box'}
+            = {qty}BOX（{totalPacks}パック）・BOX 定価で計算
           {:else}
-            = {packs}パック・パック定価で計算
+            = {totalPacks}パック・パック定価で計算
           {/if}
         </p>
       </div>
@@ -187,12 +203,12 @@
         <div>
           <span class="text-[10px] text-slate-500">内訳</span>
           <div class="mt-0.5 h-9 px-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center text-[11px] text-slate-600">
-            {#if draft.unit === 'box'}{draft.qty} BOX{#if restPacks} + {restPacks} パック{/if}{:else}{packs} パック{/if}
+            {#if mode === 'box'}{qty} BOX（{totalPacks} パック）{:else}{qty} パック{/if}
           </div>
         </div>
       </div>
       <p class="text-[10px] text-slate-400">
-        合計 {money(draft.msrpBox ? sealedTotal : packs * (draft.msrpPack || 0))}（定価ベース）。実際の支払額に合わせて単価を修正できます。
+        合計 {money(sealedTotal)}（定価ベース）。実際の支払額に合わせて単価を修正できます。
       </p>
     </div>
   {/if}
