@@ -184,13 +184,14 @@
         </div>
         <p class="mt-1.5 text-[11px] font-bold" class:text-emerald-700={mode === 'box'} class:text-slate-700={mode !== 'box'}>
           {#if qty === 0}
-            数量を入力してください
+            数量を入力してください（1BOX 未満は 0 になります）
           {:else if mode === 'box'}
             = {qty}BOX（{totalPacks}パック）・BOX 定価で計算
           {:else}
             = {totalPacks}パック・パック定価で計算
           {/if}
         </p>
+        <p class="mt-0.5 text-[9px] text-slate-400">単位を切り替えると数量を換算します（パック→BOX は端数を切り捨て）</p>
       </div>
     </div>
 

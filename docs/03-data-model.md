@@ -141,6 +141,7 @@ Setting（単一レコード）
 - 入力は **単位（パック / BOX）＋数量**。`packsPerBox` は商品値 → 設定既定値の順で解決
 - BOX 選択時: `unit = box`、`qty = 数量`、`totalPacks = qty * packsPerBox`、`unitPrice = msrpBox`
 - パック選択時: `unit = pack`、`totalPacks = qty`、`unitPrice = msrpPack`
+- **単位切替時の換算**: BOX→パック は `qty × packsPerBox`、パック→BOX は `floor(qty / packsPerBox)`（端数パックは切り捨て。89 → 2BOX = 60 パック）
 - BOX 定価が無い商品は BOX を選べない（パック固定）。**½BOX など半端な BOX は提供しない**
 - `packsPerUnit` は購入時点の値を保存（後で設定が変わっても履歴が崩れない）
 - 商品名は**選択式**。候補 = 全 `setReleases`（発売済みを含む）＋ 既存 `purchases.productKey` の重複排除

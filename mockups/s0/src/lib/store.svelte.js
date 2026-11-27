@@ -162,7 +162,18 @@ export function recalcSealed() {
 export function setSealedMode(mode) {
   const d = shop.draft;
   if (!d) return;
-  d.unitMode = mode === 'box' && d.msrpBox ? 'box' : 'pack';
+  const pb = Number(d.packsPerBox) || 30;
+  const qty = Math.max(0, Number(d.quantity) || 0);
+  if (mode === 'box' && d.msrpBox) {
+    // パック → BOX は切り捨て（89パック → 2BOX = 60パック）
+    d.unitMode = 'box';
+    d.quantity = Math.floor(qty / pb);
+  } else {
+    // BOX → パック は換算（3BOX → 90パック）
+    const packs = d.unitMode === 'box' ? qty * pb : qty;
+    d.unitMode = 'pack';
+    d.quantity = packs;
+  }
   recalcSealed();
 }
 
