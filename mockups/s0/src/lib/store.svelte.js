@@ -1,4 +1,4 @@
-import { purchases, reservations, wishItems, releases } from './sample.js';
+import { purchases, reservations, wishItems, releases, compareRows } from './sample.js';
 
 // モック専用の画面間状態（保存はしない・リロードで初期化）
 const seed = [
@@ -46,11 +46,24 @@ export const shop = $state({
   tab: 'all',
   draft: null,
   selectedId: null,
-  // 欲しいリスト（モックでは保存しない）
+  // 価格観測（カード名 × 店舗。レアリティはここに付く）
+  prices: compareRows.flatMap((row, ri) =>
+    row.prices
+      .filter((p) => p.price > 0)
+      .map((p, pi) => ({
+        id: `p${ri}_${pi}`,
+        name: row.name,
+        store: p.store,
+        rarity: p.rarity || '',
+        price: p.price,
+        stock: p.stock,
+        observedAt: 10 + ri * 3 + pi,
+      })),
+  ),
+  // 欲しいリスト（カード名のみ）
   wish: wishItems.map((w) => ({
     id: `w${w.id}`,
     name: w.name,
-    rarity: w.rarity || '',
     wanted: w.wanted,
     target: w.target,
     priority: w.priority,
@@ -249,6 +262,87 @@ export function deleteEntry(id) {
   shop.entries = shop.entries.filter((e) => e.id !== id);
 }
 
+// --- 価格観測（カード名 × 店舗） ---
+let priceSeq = 100;
+
+export function addPrice({ name, store, rarity = '', price, stock = 2 }) {
+  priceSeq += 1;
+  shop.prices.push({
+    id: `pn${priceSeq}`,
+    name,
+    store,
+    rarity,
+    price: Number(price) || 0,
+    stock,
+    observedAt: priceSeq,
+  });
+}
+
+export function latestPrices(name) {
+  // キーは「店舗 × レアリティ」。同じ組み合わせは最新の 1 件だけ残す
+  const map = new Map();
+  for (const p of shop.prices.filter((x) => x.name === name)) {
+    const key = `${p.store}|${p.rarity}`;
+    const prev = map.get(key);
+    if (!prev || p.observedAt >= prev.observedAt) map.set(key, p);
+  }
+  return [...map.values()];
+}
+
+// 全カードの最新観測（カード × 店舗 × レアリティで 1 件）
+export function latestObservations() {
+  const map = new Map();
+  for (const p of shop.prices) {
+    const key = `${p.name}|${p.store}|${p.rarity}`;
+    const prev = map.get(key);
+    if (!prev || p.observedAt >= prev.observedAt) map.set(key, p);
+  }
+  return [...map.values()];
+}
+
+// 集計軸: 店舗 → カード名 → レアリティ
+export function observationsByStore() {
+  const byStore = new Map();
+  for (const p of latestObservations()) {
+    if (!byStore.has(p.store)) byStore.set(p.store, new Map());
+    const cards = byStore.get(p.store);
+    if (!cards.has(p.name)) cards.set(p.name, []);
+    cards.get(p.name).push(p);
+  }
+  return [...byStore.entries()]
+    .map(([store, cards]) => ({
+      store,
+      cards: [...cards.entries()]
+        .map(([name, list]) => {
+          const sorted = [...list].sort((a, b) => a.price - b.price);
+          return { name, list: sorted, cheapest: sorted[0].price, cheapestRarity: sorted[0].rarity };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, 'ja')),
+    }))
+    .sort((a, b) => a.store.localeCompare(b.store, 'ja'));
+}
+
+// カード名 → 店舗 → レアリティ（安い順）
+export function pricesByStore(name) {
+  const byStore = new Map();
+  for (const p of latestPrices(name)) {
+    if (!byStore.has(p.store)) byStore.set(p.store, []);
+    byStore.get(p.store).push(p);
+  }
+  return [...byStore.entries()]
+    .map(([store, list]) => ({
+      store,
+      list: [...list].sort((a, b) => a.price - b.price),
+      cheapest: Math.min(...list.map((p) => p.price)),
+    }))
+    .sort((a, b) => a.cheapest - b.cheapest);
+}
+
+export function bestPrice(name) {
+  const list = latestPrices(name);
+  return list.length ? list.reduce((a, b) => (a.price <= b.price ? a : b)) : null;
+}
+
 // --- 欲しいリスト ---
 export function wishBought(name) {
   return shop.entries
@@ -266,7 +360,6 @@ export function addWish(name) {
   const item = {
     id: `w${Date.now()}`,
     name,
-    rarity: '',
     wanted: 1,
     target: 0,
     priority: 2,

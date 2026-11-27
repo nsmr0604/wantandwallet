@@ -1,6 +1,9 @@
 <script>
-  import { compareRows, yen, money } from '../sample.js';
-  import { shop, wishBought, wishRemaining, updateWish, removeWish, draftFromCard } from '../store.svelte.js';
+  import { stores, yen, money } from '../sample.js';
+  import {
+    shop, wishBought, wishRemaining, updateWish, removeWish, draftFromCard,
+    latestPrices, bestPrice, addPrice, pricesByStore,
+  } from '../store.svelte.js';
   import { RARITIES, rarityLabel } from '../rarity.js';
 
   let { go } = $props();
@@ -13,14 +16,7 @@
   };
 
   let editing = $state(null);
-
-  const bestOf = (name) => {
-    const row = compareRows.find((r) => r.name === name);
-    if (!row) return null;
-    const prices = row.prices.filter((p) => p.price > 0);
-    if (!prices.length) return null;
-    return prices.reduce((a, b) => (a.price <= b.price ? a : b));
-  };
+  let priceEditing = $state(null);
 
   const filterLabel = { all: 'すべて', high: '優先度 高', mid: '優先度 中', low: '優先度 低', done: '達成済み' };
 
@@ -28,7 +24,7 @@
     shop.wish.filter((w) => {
       const rem = wishRemaining(w);
       if (shop.wishFilter === 'done') return rem === 0;
-      if (rem === 0 && shop.wishFilter !== 'done') return false;
+      if (rem === 0) return false;
       if (shop.wishFilter === 'high') return w.priority === 1;
       if (shop.wishFilter === 'mid') return w.priority === 2;
       if (shop.wishFilter === 'low') return w.priority === 3;
@@ -67,14 +63,29 @@
   };
 
   const recordBuy = (w) => {
-    const best = bestOf(w.name);
+    const best = bestPrice(w.name);
     draftFromCard({
       name: w.name,
       price: best?.price ?? w.target ?? 0,
       store: best?.store ?? '秋葉原 A 店',
-      rarity: w.rarity || '',
+      rarity: best?.rarity ?? '',
     });
     go('purchase-form');
+  };
+
+  const openPrice = (w) => {
+    priceEditing = {
+      name: w.name,
+      store: stores[0].name,
+      rarity: '',
+      price: bestPrice(w.name)?.price ?? 0,
+    };
+  };
+
+  const savePrice = () => {
+    if (!priceEditing) return;
+    addPrice(priceEditing);
+    priceEditing = null;
   };
 </script>
 
@@ -146,7 +157,8 @@
   <ul class="space-y-2">
     {#each sorted as w (w.id)}
       {@const rem = wishRemaining(w)}
-      {@const best = bestOf(w.name)}
+      {@const groups = pricesByStore(w.name)}
+      {@const best = bestPrice(w.name)}
       <li class="rounded-xl bg-white border border-slate-200 overflow-hidden">
         <div class="p-3">
           <div class="flex items-start gap-2">
@@ -155,7 +167,7 @@
             </span>
             <div class="min-w-0 flex-1">
               <p class="text-[13px] font-bold text-slate-900 truncate">{w.name}</p>
-              <p class="text-[10px] text-slate-500">{w.rarity ? `レアリティ: ${rarityLabel(w.rarity)}` : 'レアリティ: 指定なし'}</p>
+              <p class="text-[10px] text-slate-500">カード名で管理（レアリティは店舗ごとの価格に付きます）</p>
             </div>
             <button class="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400" aria-label="編集" onclick={() => openEdit(w)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="m14 6 4 4" /></svg>
@@ -182,23 +194,45 @@
             <div class="h-full bg-emerald-500" style="width: {(wishBought(w.name) / w.wanted) * 100}%"></div>
           </div>
 
-          <div class="mt-2 flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5">
-            <span class="text-[9px] text-slate-500">目標 {yen(w.target)}</span>
-            {#if best}
-              <span class="text-[9px] text-slate-500">最安 {yen(best.price)}（{best.store}）</span>
-              {@const diff = (w.target || 0) - best.price}
-              <span class="ml-auto text-[9px] font-bold" class:text-emerald-700={diff >= 0} class:text-slate-400={diff < 0}>
-                {#if w.target === 0}—{:else if diff > 0}目標より {yen(diff)} 安い{:else if diff === 0}目標どおり{:else}目標より {yen(-diff)} 高い{/if}
-              </span>
+          <!-- 店舗ごとの価格（レアリティ付き） -->
+          <div class="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2 py-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] text-slate-500">店舗別の価格（最新）</span>
+              {#if w.target}
+                <span class="text-[9px] text-slate-500">目標 {yen(w.target)}</span>
+              {/if}
+            </div>
+            {#if groups.length}
+              <ul class="mt-1 space-y-0.5">
+                {#each groups.slice(0, 2) as g (g.store)}
+                  <li class="flex items-center gap-1.5 text-[10px]">
+                    <span class="text-slate-600 truncate">{g.store}</span>
+                    <span class="text-[8px] text-slate-500 border border-slate-200 rounded px-1 shrink-0">{rarityLabel(g.list[0].rarity)}</span>
+                    <span class="ml-auto font-bold shrink-0" class:text-emerald-700={best && g.cheapest === best.price} class:text-slate-800={!best || g.cheapest !== best.price}>{yen(g.cheapest)}</span>
+                  </li>
+                {/each}
+              </ul>
+              {#if groups.length > 2}
+                <p class="mt-0.5 text-[9px] text-slate-400">ほか {groups.length - 2} 店舗</p>
+              {/if}
+              {#if best && w.target}
+                {@const diff = w.target - best.price}
+                <p class="mt-0.5 text-[9px] font-bold" class:text-emerald-700={diff >= 0} class:text-slate-400={diff < 0}>
+                  {#if diff > 0}最安は目標より {yen(diff)} 安い{:else if diff === 0}最安は目標どおり{:else}最安でも目標より {yen(-diff)} 高い{/if}
+                </p>
+              {/if}
             {:else}
-              <span class="ml-auto text-[9px] text-slate-400">価格未記録</span>
+              <p class="mt-1 text-[9px] text-slate-400">価格が未登録です。店舗ごとに価格とレアリティを登録できます。</p>
             {/if}
           </div>
         </div>
 
-        <div class="grid grid-cols-2 border-t border-slate-100 divide-x divide-slate-100">
+        <div class="grid grid-cols-3 border-t border-slate-100 divide-x divide-slate-100">
           <button class="h-10 text-[11px] font-bold text-slate-700 active:bg-slate-50" onclick={() => recordBuy(w)}>
             購入を記録
+          </button>
+          <button class="h-10 text-[11px] font-bold text-slate-700 active:bg-slate-50" onclick={() => openPrice(w)}>
+            価格を登録
           </button>
           <button class="h-10 text-[11px] font-bold text-emerald-700 active:bg-emerald-50" onclick={() => go('compare')}>
             価格を見る
@@ -215,11 +249,11 @@
   {/if}
 
   <p class="px-1 text-[10px] text-slate-400">
-    再録・イラスト違いは 1 件にまとめています。購入は「購入を記録」から（単品は予約なし）。
+    欲しいものはカード名だけで管理します。レアリティと価格は「店舗ごと」に記録します。
   </p>
 </section>
 
-<!-- 編集シート -->
+<!-- 編集シート（カード名・枚数・優先度・目標・メモ） -->
 {#if editing}
   <div class="fixed inset-0 z-50 bg-slate-900/40" onclick={() => (editing = null)} role="presentation">
     <div class="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-white rounded-t-2xl p-4 space-y-3" onclick={(e) => e.stopPropagation()} role="presentation">
@@ -259,22 +293,11 @@
       </div>
 
       <label class="block">
-        <span class="text-[10px] text-slate-500">レアリティ（任意）</span>
-        <select
-          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 bg-white text-[12px] outline-none focus:border-emerald-500"
-          bind:value={editing.rarity}
-        >
-          {#each RARITIES as r (r.value)}
-            <option value={r.value}>{r.label}</option>
-          {/each}
-        </select>
-        <span class="mt-0.5 block text-[9px] text-slate-400">期間限定（20th・ゴールド等）は含みません</span>
-      </label>
-
-      <label class="block">
         <span class="text-[10px] text-slate-500">メモ</span>
         <input class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]" placeholder="例: 再録待ち" bind:value={editing.memo} />
       </label>
+
+      <p class="text-[9px] text-slate-400">レアリティは「価格を登録」で店舗ごとに設定します（期間限定は含みません）。</p>
 
       <div class="grid grid-cols-3 gap-2 pt-1">
         <button class="h-11 rounded-xl border border-rose-200 bg-rose-50 text-[11px] font-bold text-rose-700" onclick={() => removeWish(editing.id)}>
@@ -287,6 +310,64 @@
           保存
         </button>
       </div>
+    </div>
+  </div>
+{/if}
+
+<!-- 価格登録シート（店舗 × レアリティ × 価格） -->
+{#if priceEditing}
+  <div class="fixed inset-0 z-50 bg-slate-900/40" onclick={() => (priceEditing = null)} role="presentation">
+    <div class="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-white rounded-t-2xl p-4 space-y-3" onclick={(e) => e.stopPropagation()} role="presentation">
+      <div class="flex items-center justify-between">
+        <div class="min-w-0">
+          <p class="text-[10px] text-slate-500">価格を登録</p>
+          <p class="text-[13px] font-bold text-slate-900 truncate">{priceEditing.name}</p>
+        </div>
+        <button class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 text-[12px]" onclick={() => (priceEditing = null)}>✕</button>
+      </div>
+
+      <div>
+        <p class="text-[10px] text-slate-500 mb-1">店舗</p>
+        <div class="flex flex-wrap gap-1.5">
+          {#each stores as s (s.id)}
+            <button
+              class="h-8 px-2.5 rounded-full border text-[10px] font-medium"
+              class:bg-slate-900={priceEditing.store === s.name} class:text-white={priceEditing.store === s.name} class:border-slate-900={priceEditing.store === s.name}
+              class:bg-white={priceEditing.store !== s.name} class:text-slate-600={priceEditing.store !== s.name} class:border-slate-200={priceEditing.store !== s.name}
+              onclick={() => (priceEditing.store = s.name)}
+            >
+              {s.name}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">レアリティ（任意）</span>
+        <select
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 bg-white text-[12px] outline-none focus:border-emerald-500"
+          bind:value={priceEditing.rarity}
+        >
+          {#each RARITIES as r (r.value)}
+            <option value={r.value}>{r.label}</option>
+          {/each}
+        </select>
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">価格（円）</span>
+        <input class="mt-0.5 w-full h-10 px-2 rounded-lg border border-slate-300 text-[14px]" type="number" min="0" bind:value={priceEditing.price} />
+      </label>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button class="h-11 rounded-xl border border-slate-300 bg-white text-[12px] font-bold text-slate-600" onclick={() => (priceEditing = null)}>
+          キャンセル
+        </button>
+        <button class="h-11 rounded-xl bg-emerald-600 text-white text-[12px] font-bold" onclick={savePrice}>
+          登録する
+        </button>
+      </div>
+      <p class="text-[9px] text-slate-400">同じ店舗の価格は上書きせず、最新の記録として残ります。</p>
     </div>
   </div>
 {/if}

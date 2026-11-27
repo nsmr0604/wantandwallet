@@ -1,11 +1,14 @@
 <script>
   import { wishItems, stores, yen } from '../sample.js';
+  import { addPrice } from '../store.svelte.js';
+  import { RARITIES, rarityLabel } from '../rarity.js';
   let { go } = $props();
 
   let storeId = $state(1);
   let sortMode = $state('priority');
   let index = $state(0);
   let price = $state('1180');
+  let rarity = $state('');
 
   // 店舗は「最後に訪れた順」。選択するたびに先頭へ来る
   let visitClock = $state(Math.max(...stores.map((s) => s.lastVisited || 0)));
@@ -63,8 +66,13 @@
   };
 
   const next = () => {
+    if (item && Number(price) > 0) {
+      const storeName = orderedStores.find((s) => s.id === storeId)?.name ?? '';
+      addPrice({ name: item.name, store: storeName, rarity, price: Number(price) });
+    }
     index = (index + 1) % ordered.length;
     price = '';
+    rarity = '';
   };
 
   const changeSort = (mode) => {
@@ -178,9 +186,14 @@
     <p class="mt-1 text-[17px] font-bold text-slate-900 leading-snug">{item.name}</p>
     <p class="text-[10px] text-slate-500">{item.typeLabel}</p>
     <div class="mt-1.5 flex items-center gap-2">
-      <button class="h-7 px-2 rounded-md border border-slate-300 text-[10px] font-medium text-slate-600">
-        レアリティ: {item.rarity || '指定なし（任意）'}
-      </button>
+      <select
+        class="h-7 max-w-[60%] rounded-md border border-slate-300 bg-white px-1 text-[10px] text-slate-700 outline-none"
+        bind:value={rarity}
+      >
+        {#each RARITIES as r (r.value)}
+          <option value={r.value}>レアリティ: {r.label}</option>
+        {/each}
+      </select>
       <p class="ml-auto text-[11px] text-slate-500">目標 {yen(item.target)}</p>
     </div>
   </div>
