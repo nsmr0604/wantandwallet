@@ -15,6 +15,7 @@ export async function listStores(includeArchived = false): Promise<Store[]> {
 export async function upsertStore(input: {
   id?: string;
   name: string;
+  shortName?: string;
   kind: 'store' | 'online';
   area?: string;
   url?: string;
@@ -30,6 +31,7 @@ export async function upsertStore(input: {
     const next: Store = {
       ...existing,
       name,
+      shortName: input.shortName?.trim() || undefined,
       kind: input.kind,
       area: input.area,
       url: input.url,
@@ -43,6 +45,7 @@ export async function upsertStore(input: {
   const created: Store = {
     id: newId(),
     name,
+    shortName: input.shortName?.trim() || undefined,
     kind: input.kind,
     area: input.area,
     url: input.url,

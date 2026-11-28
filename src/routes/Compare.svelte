@@ -4,6 +4,7 @@
   import { db } from '../lib/db/schema';
   import { latestAll, groupByStore, groupByCard, type StorePriceGroup } from '../lib/repositories/prices';
   import { rarityLabel } from '../lib/domain/rarities';
+  import { storeLabel } from '../lib/domain/stores';
   import type { Card, PriceObservation, Store } from '../lib/domain/types';
 
   let rows = $state<PriceObservation[]>([]);
@@ -68,6 +69,10 @@
   });
 
   const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+  const storeName = (id: string) => {
+    const s = stores[id];
+    return s ? storeLabel(s) : '—';
+  };
 </script>
 
 <section class="space-y-3">
@@ -112,7 +117,7 @@
         <div class="px-3 pt-3 pb-2">
           <p class="text-[13px] font-bold text-slate-900">{cards[row.cardId]?.nameJa ?? '（不明）'}</p>
           <p class="text-[10px] text-slate-500">
-            最安 {yen(row.best.price)}（{stores[row.best.storeId]?.name ?? '—'} / {rarityLabel(row.best.rarity)}）
+            最安 {yen(row.best.price)}（{storeName(row.best.storeId)} / {rarityLabel(row.best.rarity)}）
           </p>
         </div>
         <ul class="border-t border-slate-100 divide-y divide-slate-100">
@@ -120,7 +125,7 @@
             <li class="px-3 py-2" class:bg-emerald-50={g.cheapest.price === row.best.price}>
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-medium text-slate-700 flex-1 truncate">
-                  {stores[g.storeId]?.name ?? '—'}
+                  {storeName(g.storeId)}
                 </span>
                 <span class="text-[12px] font-bold text-slate-900">{yen(g.cheapest.price)}</span>
               </div>
@@ -141,7 +146,7 @@
     {#each storeViews as s (s.storeId)}
       <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden">
         <div class="px-3 pt-3 pb-2 flex items-center gap-2">
-          <p class="text-[13px] font-bold text-slate-900 flex-1 truncate">{stores[s.storeId]?.name ?? '—'}</p>
+          <p class="text-[13px] font-bold text-slate-900 flex-1 truncate">{storeName(s.storeId)}</p>
           <span class="text-[10px] text-slate-500">{s.cards.length} 種</span>
         </div>
         <ul class="border-t border-slate-100 divide-y divide-slate-100">

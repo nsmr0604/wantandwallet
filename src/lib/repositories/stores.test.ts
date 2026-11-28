@@ -28,4 +28,15 @@ describe('stores repository', () => {
     expect((await listStores()).length).toBe(0);
     expect((await listStores(true)).length).toBe(1);
   });
+
+  it('店舗名を後から変更できる', async () => {
+    const s = await upsertStore({
+      name: 'カードショップ竜星のPAO 秋葉原ロケット無線店',
+      kind: 'store',
+    });
+    await upsertStore({ id: s.id, name: 'PAO 秋葉原', kind: 'store', favorite: true });
+    const [row] = await listStores();
+    expect(row.name).toBe('PAO 秋葉原');
+    expect(row.favorite).toBe(1);
+  });
 });

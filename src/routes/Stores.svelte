@@ -9,6 +9,7 @@
   } from '../lib/repositories/stores';
   import type { Store } from '../lib/domain/types';
   import { filterShops, type ShopRecord } from '../lib/domain/shops';
+  import { storeLabel } from '../lib/domain/stores';
 
   let stores = $state<Store[]>([]);
   let loading = $state(true);
@@ -17,6 +18,7 @@
   let kind = $state<'store' | 'online'>('store');
   let favorite = $state(false);
   let message = $state('');
+  let editing = $state<Store | null>(null);
 
   // 実在店舗カタログ（Konami カードゲームネットワーク）
   let catalog = $state<ShopRecord[] | null>(null);
@@ -75,7 +77,7 @@
   }
 
   async function toggleFavorite(s: Store) {
-    await upsertStore({ id: s.id, name: s.name, kind: s.kind, favorite: s.favorite === 0, area: s.area, url: s.url, memo: s.memo });
+    await upsertStore({ id: s.id, name: s.name, shortName: s.shortName, kind: s.kind, favorite: s.favorite === 0, area: s.area, url: s.url, memo: s.memo });
     await load();
   }
 
@@ -92,6 +94,25 @@
 
   async function restore(s: Store) {
     await restoreStore(s.id);
+    await load();
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    const next = editing.name.trim();
+    if (!next) return;
+    await upsertStore({
+      id: editing.id,
+      name: next,
+      shortName: editing.shortName,
+      kind: editing.kind,
+      area: editing.area,
+      url: editing.url,
+      favorite: editing.favorite === 1,
+      memo: editing.memo,
+    });
+    message = `「${next}」に変更しました`;
+    editing = null;
     await load();
   }
 </script>
@@ -215,9 +236,10 @@
         <div class="flex items-center gap-2">
           <div class="min-w-0 flex-1">
             <p class="text-[13px] font-bold text-slate-900 truncate">
-              {store.favorite ? '★' : ''}{store.name}
+              {store.favorite ? '★' : ''}{storeLabel(store)}
             </p>
-            <p class="text-[10px] text-slate-500">
+            <p class="text-[10px] text-slate-500 truncate">
+              {#if store.shortName}<span class="text-slate-400">{store.name}・</span>{/if}
               {store.kind === 'store' ? '実店舗' : '通販'}
               {#if store.lastVisitedAt}
                 ・最終訪問 {new Date(store.lastVisitedAt).toLocaleDateString('ja-JP')}
@@ -227,6 +249,12 @@
               {#if store.archivedAt}・アーカイブ{/if}
             </p>
           </div>
+          <button
+            class="h-8 px-2 rounded-lg border border-slate-300 text-[10px] font-bold text-slate-600"
+            onclick={() => (editing = { ...store })}
+          >
+            編集
+          </button>
           <button
             class="h-8 px-2 rounded-lg border border-slate-300 text-[10px] font-bold text-slate-600"
             onclick={() => toggleFavorite(store)}
@@ -256,3 +284,95 @@
     店舗は「最後に訪問した順」で巡回画面に並びます。お気に入りは同着時に優先されます。
   </p>
 </section>
+
+{#if editing}
+  <div class="fixed inset-0 z-50 bg-slate-900/40" onclick={() => (editing = null)} role="presentation">
+    <div
+      class="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-white rounded-t-2xl p-4 space-y-3"
+      onclick={(e) => e.stopPropagation()}
+      role="presentation"
+    >
+      <div class="flex items-center justify-between">
+        <p class="text-[13px] font-bold text-slate-900">店舗を編集</p>
+        <button class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 text-[12px]" onclick={() => (editing = null)}>
+          ✕
+        </button>
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">店舗名（正式名）</span>
+        <input
+          class="mt-0.5 w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500"
+          bind:value={editing.name}
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">短い別名（表示用）</span>
+        <input
+          class="mt-0.5 w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500"
+          placeholder="例: PAO 秋葉原"
+          bind:value={editing.shortName}
+        />
+        <span class="mt-0.5 block text-[9px] text-slate-400">
+          入力すると一覧・巡回ではこの名前で表示します（未入力なら正式名）
+        </span>
+      </label>
+
+      <div>
+        <p class="text-[10px] text-slate-500 mb-1">種別</p>
+        <div class="grid grid-cols-2 gap-0.5 rounded-lg bg-slate-200 p-0.5">
+          {#each [['store', '実店舗'], ['online', '通販']] as [k, label] (k)}
+            <button
+              class="h-9 rounded-md text-[11px] font-bold"
+              class:bg-white={editing.kind === k}
+              class:text-slate-900={editing.kind === k}
+              class:text-slate-500={editing.kind !== k}
+              onclick={() => editing && (editing.kind = k as 'store' | 'online')}
+            >
+              {label}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">エリア</span>
+        <input
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]"
+          placeholder="例: 東京 / 秋葉原"
+          bind:value={editing.area}
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">URL</span>
+        <input
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]"
+          placeholder="https://…"
+          bind:value={editing.url}
+        />
+      </label>
+
+      <label class="block">
+        <span class="text-[10px] text-slate-500">メモ（住所など）</span>
+        <input
+          class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]"
+          bind:value={editing.memo}
+        />
+      </label>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button
+          class="h-11 rounded-xl border border-slate-300 bg-white text-[12px] font-bold text-slate-600"
+          onclick={() => (editing = null)}
+        >
+          キャンセル
+        </button>
+        <button class="h-11 rounded-xl bg-emerald-600 text-white text-[12px] font-bold" onclick={saveEdit}>
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

@@ -7,6 +7,7 @@
   import { addPrice } from '../lib/repositories/prices';
   import { patrolOrder, remainingQty } from '../lib/domain/budget';
   import { RARITIES } from '../lib/domain/rarities';
+  import { storeLabel } from '../lib/domain/stores';
   import type { Store } from '../lib/domain/types';
 
   interface Entry {
@@ -84,7 +85,7 @@
         stock: 1,
         source: 'visit',
       });
-      toast = `${currentStore?.name ?? '店舗'}：${item.name} ¥${value.toLocaleString('ja-JP')} を記録`;
+      toast = `${currentStore ? storeLabel(currentStore) : '店舗'}：${item.name} ¥${value.toLocaleString('ja-JP')} を記録`;
     }
     price = '';
     rarity = '';
@@ -118,7 +119,7 @@
               class:border-slate-200={storeId !== s.id}
               onclick={() => selectStore(s.id)}
             >
-              {s.favorite ? '★' : ''}{s.name}
+              {s.favorite ? '★' : ''}{storeLabel(s)}
             </button>
           {/each}
           {#if stores.length === 0}

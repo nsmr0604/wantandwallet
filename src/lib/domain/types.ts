@@ -25,6 +25,8 @@ export interface Card {
 export interface Store {
   id: string;
   name: string;
+  /** 表示用の短い別名（未設定なら name を使う） */
+  shortName?: string;
   kind: 'store' | 'online';
   area?: string;
   url?: string;
