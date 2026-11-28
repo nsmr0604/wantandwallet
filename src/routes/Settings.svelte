@@ -84,6 +84,7 @@
       <p class="text-[11px] font-bold text-slate-500">このアプリについて</p>
       <p class="mt-1 text-[10px] text-slate-500 leading-relaxed">
         wantandwallet 0.1.0（S1）<br />
+        ビルド: {new Date(__BUILD_TIME__).toLocaleString('ja-JP')}<br />
         非公式ツールです。コナミ・権利者とは関係ありません。
       </p>
     </div>

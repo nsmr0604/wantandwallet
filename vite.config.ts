@@ -10,7 +10,7 @@ export default defineConfig({
     svelte(),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'wantandwallet',
@@ -27,6 +27,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webp,json}'],
         navigateFallback: 'index.html',
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
       },
     }),
     cloudflare(),
@@ -34,5 +37,8 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
     environment: 'node',
+  },
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
 });
