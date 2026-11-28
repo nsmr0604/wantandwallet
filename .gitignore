@@ -29,6 +29,8 @@ knowledge/
 public/data/shops.json
 # カード索引（yaml-yugi から生成・再配布しない）
 public/data/cards-index.json
+# 新弾情報（公式ページから生成）
+public/data/releases.json
 
 # wrangler / Cloudflare
 .wrangler/

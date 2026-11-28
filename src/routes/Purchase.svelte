@@ -6,6 +6,7 @@
   import { listStores } from '../lib/repositories/stores';
   import { listWish, type WishRow } from '../lib/repositories/wish';
   import { upsertManualCard } from '../lib/repositories/cards';
+  import { takePendingDraft } from '../lib/purchaseDraft.svelte';
   import type { Card, Purchase, Settings, Store } from '../lib/domain/types';
 
   let purchases = $state<Purchase[]>([]);
@@ -47,7 +48,21 @@
     loading = false;
   }
 
-  onMount(load);
+  onMount(async () => {
+    await load();
+    const draft = takePendingDraft();
+    if (draft) {
+      form.itemType = 'sealed';
+      form.productName = draft.productName;
+      form.unitMode = draft.unitMode;
+      form.quantity = 1;
+      if (draft.unitMode === 'box') form.boxPrice = draft.unitPrice;
+      else form.packPrice = draft.unitPrice;
+      form.status = 'reserved';
+      form.expectedAt = draft.expectedAt;
+      showForm = true;
+    }
+  });
 
   const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
   const unitLabel: Record<string, string> = { single: '単品', pack: 'パック', box: 'BOX' };
