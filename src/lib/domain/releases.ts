@@ -38,3 +38,31 @@ export function past(products: ReleaseProduct[], now: Date = new Date()): Releas
     .filter((p) => p.date && p.date < today)
     .sort((a, b) => b.date.localeCompare(a.date));
 }
+
+/** 商品選択用: 今後（発売日昇順）→ 発売済み（新しい順） */
+export function sortForPicker(products: ReleaseProduct[], now: Date = new Date()): ReleaseProduct[] {
+  return [...upcoming(products, now), ...past(products, now)];
+}
+
+const SUPPLY_NAME =
+  /プロテクター|プレイマット|デッキケース|スリーブ|フィールド|ラバー|バインダー|アルバム|ダイス|コイン|ストレージ|カードケース|ケース/;
+
+/** カード商品（パック・デッキ）かどうか。グッズ・サプライを除外する */
+export function isCardProduct(p: { name: string; kind?: string }): boolean {
+  if (p.kind && /アイテム|グッズ|サプライ/.test(p.kind)) return false;
+  return !SUPPLY_NAME.test(p.name);
+}
+
+export function cardProducts(products: ReleaseProduct[]): ReleaseProduct[] {
+  return products.filter(isCardProduct);
+}
+
+/** 選択候補: 予約可能な将来の弾＋発売から 1 年以内のカード商品 */
+export function pickableProducts(
+  products: ReleaseProduct[],
+  now: Date = new Date(),
+): ReleaseProduct[] {
+  const cutoff = todayJst(new Date(now.getTime() - 365 * 86_400_000));
+  const list = cardProducts(products).filter((p) => p.date && p.date >= cutoff);
+  return sortForPicker(list, now);
+}

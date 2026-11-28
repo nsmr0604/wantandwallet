@@ -9,6 +9,7 @@
   import { takePendingDraft } from '../lib/purchaseDraft.svelte';
   import type { Card, Purchase, Settings, Store } from '../lib/domain/types';
   import type { ReleaseProduct } from '../lib/domain/releases';
+  import { pickableProducts } from '../lib/domain/releases';
 
   let purchases = $state<Purchase[]>([]);
   let cards = $state<Record<string, Card>>({});
@@ -51,7 +52,7 @@
       const res = await fetch(`${import.meta.env.BASE_URL}data/releases.json`);
       if (res.ok) {
         const json = (await res.json()) as { products: ReleaseProduct[] };
-        releaseProducts = json.products ?? [];
+        releaseProducts = pickableProducts(json.products ?? []);
       }
     } catch {
       releaseProducts = [];
@@ -107,9 +108,21 @@
     }
     return map;
   });
-  const productOptions = $derived(
-    [...productMap.keys()].sort((a, b) => a.localeCompare(b, 'ja')),
-  );
+  const productOptions = $derived.by(() => {
+    const names: string[] = [];
+    const seen = new Set<string>();
+    for (const p of releaseProducts) {
+      if (seen.has(p.name)) continue;
+      seen.add(p.name);
+      names.push(p.name);
+    }
+    for (const name of productMap.keys()) {
+      if (seen.has(name)) continue;
+      seen.add(name);
+      names.push(name);
+    }
+    return names;
+  });
   const effectivePacksPerBox = $derived(form.productPacksPerBox || packsPerBox);
 
   function onProduct(name: string) {
@@ -292,7 +305,7 @@
             </p>
           {:else}
             <p class="text-[9px] text-slate-400">
-              定価・パック数は商品から自動入力されます（実際の支払額に合わせて単価を修正できます）
+              予約可能な将来の弾と発売1年内のカード商品（グッズ・プロテクター等は除く）。定価・パック数は自動入力されます。
             </p>
           {/if}
           <div class="grid grid-cols-2 gap-0.5 rounded-lg bg-slate-200 p-0.5">

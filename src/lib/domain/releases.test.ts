@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { daysUntil, past, todayJst, upcoming, type ReleaseProduct } from './releases';
+import {
+  cardProducts,
+  daysUntil,
+  isCardProduct,
+  past,
+  pickableProducts,
+  todayJst,
+  upcoming,
+  type ReleaseProduct,
+} from './releases';
 
 const p = (name: string, date: string): ReleaseProduct => ({
   name,
@@ -42,5 +51,37 @@ describe('todayJst', () => {
   it('UTC 15:00 をまたぐと日本時間の日付になる', () => {
     expect(todayJst(new Date('2026-11-27T14:59:00Z'))).toBe('2026-11-27');
     expect(todayJst(new Date('2026-11-27T15:00:00Z'))).toBe('2026-11-28');
+  });
+});
+
+describe('isCardProduct', () => {
+  it('グッズ・サプライを除外する', () => {
+    expect(isCardProduct({ name: 'デュエリストカードプロテクター A', kind: 'デュエリストアイテム' })).toBe(false);
+    expect(isCardProduct({ name: 'デュエルフィールド 闇遊戯', kind: 'デュエリストアイテム' })).toBe(false);
+    expect(isCardProduct({ name: 'PRIDE AND SOUL', kind: '基本パック' })).toBe(true);
+    expect(isCardProduct({ name: 'デッキビルドパック 2027', kind: 'コンセプトパック' })).toBe(true);
+  });
+});
+
+describe('pickableProducts', () => {
+  const now = new Date('2026-11-28T03:00:00+09:00');
+  const list: ReleaseProduct[] = [
+    p('古いパック', '2024-01-01'),
+    p('1年前のパック', '2025-11-28'),
+    p('半年前のパック', '2026-06-01'),
+    p('次のパック', '2027-01-23'),
+    { ...p('プロテクター', '2027-01-23'), kind: 'デュエリストアイテム' },
+  ];
+
+  it('将来＋1年内のカード商品だけを返す', () => {
+    expect(pickableProducts(list, now).map((x) => x.name)).toEqual([
+      '次のパック',
+      '半年前のパック',
+      '1年前のパック',
+    ]);
+  });
+
+  it('cardProducts はサプライを除く', () => {
+    expect(cardProducts(list).map((x) => x.name)).not.toContain('プロテクター');
   });
 });
