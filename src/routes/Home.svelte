@@ -1,23 +1,44 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { ensureSettings } from '../lib/db/schema';
+  import { listPurchases } from '../lib/repositories/purchases';
   import { go } from '../lib/router.svelte';
-  import type { Settings } from '../lib/domain/types';
+  import type { Purchase, Settings } from '../lib/domain/types';
 
   let settings = $state<Settings | null>(null);
+  let purchases = $state<Purchase[]>([]);
 
   onMount(async () => {
     settings = await ensureSettings();
+    purchases = await listPurchases();
   });
+
+  const spent = $derived(
+    purchases.filter((p) => p.status === 'bought').reduce((n, p) => n + p.total, 0),
+  );
+  const reserved = $derived(
+    purchases.filter((p) => p.status === 'reserved').reduce((n, p) => n + p.total, 0),
+  );
+  const limit = $derived(settings?.defaultMonthlyLimit ?? 0);
+  const remaining = $derived(limit - spent - reserved);
+  const rate = $derived(limit > 0 ? Math.round(((spent + reserved) / limit) * 100) : 0);
 </script>
 
 <section class="space-y-3">
   <div class="rounded-2xl bg-slate-900 text-white p-4">
-    <p class="text-[11px] text-slate-300">wantandwallet</p>
-    <p class="mt-1 text-[15px] font-bold leading-snug">
-      遊戯王 OCG のシングル価格比較・購入記録・予算管理
-    </p>
-    <p class="mt-1 text-[10px] text-slate-400">S0: 基盤（画面骨格・DB・PWA）まで実装済み</p>
+    <div class="flex items-baseline justify-between">
+      <p class="text-[11px] text-slate-300">今月の残り</p>
+      <button class="text-[11px] text-slate-300 underline underline-offset-2" onclick={() => go('budget')}>内訳</button>
+    </div>
+    <p class="mt-1 text-[28px] font-bold leading-none" class:text-rose-300={remaining < 0}>{remaining < 0 ? '-' : ''}¥{Math.abs(remaining).toLocaleString('ja-JP')}</p>
+    <div class="mt-3 h-2 flex rounded-full bg-white/20 overflow-hidden">
+      <div class="h-full bg-emerald-400" style="width: {limit > 0 ? Math.min(100, (spent / limit) * 100) : 0}%"></div>
+      <div class="h-full bg-amber-300" style="width: {limit > 0 ? Math.min(100, (reserved / limit) * 100) : 0}%"></div>
+    </div>
+    <div class="mt-2 flex justify-between text-[10px] text-slate-300">
+      <span>購入 ¥{spent.toLocaleString('ja-JP')} ＋ 予約 ¥{reserved.toLocaleString('ja-JP')} / ¥{limit.toLocaleString('ja-JP')}</span>
+      <span>{rate}%</span>
+    </div>
   </div>
 
   <div class="rounded-2xl bg-white border border-slate-200 p-4">
@@ -66,11 +87,12 @@
   </div>
 
   <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
-    <p class="text-[11px] font-bold text-amber-900">S0 で確認できること</p>
+    <p class="text-[11px] font-bold text-amber-900">できること</p>
     <ul class="mt-1 text-[10px] text-amber-900 list-disc pl-4 space-y-0.5">
-      <li>9 画面の遷移（下部タブ / ヘッダー）</li>
-      <li>IndexedDB の初期化（設定レコードの作成）</li>
-      <li>PWA としてのインストール（HTTPS 配信時）</li>
+      <li>欲しいリスト（カード名・優先度・目標価格）</li>
+      <li>店舗マスタ（実在店舗検索・別名・地図）</li>
+      <li>巡回モードで価格記録 → カード別/店舗別の比較</li>
+      <li>購入・予約の記録と月次予算（残り = 上限 − 購入 − 予約）</li>
     </ul>
   </div>
 </section>
