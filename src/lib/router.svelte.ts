@@ -8,6 +8,7 @@ export const routes = [
   'compare',
   'releases',
   'settings',
+  'stores',
 ] as const;
 
 export type Route = (typeof routes)[number];
@@ -22,6 +23,7 @@ export const routeLabels: Record<Route, string> = {
   compare: '比較表',
   releases: '新弾',
   settings: '設定',
+  stores: '店舗',
 };
 
 function readRoute(): Route {

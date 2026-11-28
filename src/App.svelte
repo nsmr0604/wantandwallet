@@ -10,6 +10,7 @@
   import Compare from './routes/Compare.svelte';
   import Releases from './routes/Releases.svelte';
   import Settings from './routes/Settings.svelte';
+  import Stores from './routes/Stores.svelte';
 </script>
 
 <div class="min-h-screen bg-slate-200 flex justify-center">
@@ -17,7 +18,7 @@
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
       <div class="h-12 px-3 flex items-center justify-between">
         <h1 class="text-[15px] font-bold text-slate-900">{routeLabels[nav.route]}</h1>
-        <span class="text-[10px] text-slate-400">S0 基盤</span>
+        <span class="text-[10px] text-slate-400">S1</span>
       </div>
     </header>
 
@@ -38,6 +39,8 @@
         <Compare />
       {:else if nav.route === 'releases'}
         <Releases />
+      {:else if nav.route === 'stores'}
+        <Stores />
       {:else}
         <Settings />
       {/if}
