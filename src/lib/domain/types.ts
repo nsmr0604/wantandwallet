@@ -32,7 +32,8 @@ export interface Store {
   catalogId?: string;
   kind: 'store' | 'online';
   area?: string;
-  url?: string;
+  /** 住所（あれば地図を開ける） */
+  address?: string;
   favorite: number;
   sortOrder: number;
   lastVisitedAt?: number;

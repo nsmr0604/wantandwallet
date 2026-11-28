@@ -60,8 +60,8 @@ Setting（単一レコード）
 | id | string | PK | |
 | name | string | index | 店舗名 |
 | kind | `store` \| `online` | index | 実店舗 / 通販 |
-| area | string? | | エリア・地域 |
-| url | string? | | 通販 URL |
+| area | string? | | エリア・地域（都道府県など） |
+| address | string? | | 住所（あれば地図を開ける）。URL は保持しない |
 | favorite | number | index | 0/1。並び順上位に固定 |
 | sortOrder | number | | 手動並び順 |
 | lastVisitedAt | number? | index | 最後に巡回モードで選んだ日時（新しい順に並べる） |

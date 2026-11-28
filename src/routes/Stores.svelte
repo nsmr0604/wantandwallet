@@ -6,16 +6,17 @@
     touchStore,
     archiveStore,
     restoreStore,
-    markStoreAsCatalog,
+    applyCatalogStore,
   } from '../lib/repositories/stores';
   import type { Store } from '../lib/domain/types';
   import { filterShops, type ShopRecord } from '../lib/domain/shops';
-  import { storeLabel } from '../lib/domain/stores';
+  import { storeLabel, mapUrl, cleanAddress } from '../lib/domain/stores';
 
   let stores = $state<Store[]>([]);
   let loading = $state(true);
   let showArchived = $state(false);
   let name = $state('');
+  let address = $state('');
   let kind = $state<'store' | 'online'>('store');
   let favorite = $state(false);
   let message = $state('');
@@ -36,15 +37,22 @@
       const json = (await res.json()) as { shops: ShopRecord[] };
       const list = json.shops ?? [];
       catalog = list;
-      // 既存店舗が公式名と一致するなら catalog 由来としてロック対象にする
+      // 既存店舗に公式の出典・住所を補完する（catalog 済みでも住所が無ければ埋める）
       let changed = false;
       for (const st of stores) {
-        if (st.source) continue;
-        const hit = list.find((c) => c.name === st.name);
-        if (hit) {
-          await markStoreAsCatalog(st.id, hit.id);
-          changed = true;
-        }
+        const hit = st.catalogId
+          ? list.find((c) => c.id === st.catalogId)
+          : list.find((c) => c.name === st.name);
+        if (!hit) continue;
+        const cleaned = hit.address ? cleanAddress(hit.address, st.name) : '';
+        const needs =
+          !st.source ||
+          (!st.address && !!hit.address) ||
+          (!!cleaned && st.address !== cleaned) ||
+          (!!hit.address && st.memo === hit.address);
+        if (!needs) continue;
+        await applyCatalogStore(st.id, hit.id, hit.address);
+        changed = true;
       }
       if (changed) await load();
     } catch {
@@ -66,8 +74,7 @@
       source: 'catalog',
       catalogId: s.id,
       area: s.state || '',
-      url: s.url || '',
-      memo: s.address,
+      address: cleanAddress(s.address || '', s.name),      memo: '',
     });
     message = `「${s.name}」を店舗に追加しました`;
     name = '';
@@ -87,15 +94,16 @@
   async function add() {
     const trimmed = name.trim();
     if (!trimmed) return;
-    await upsertStore({ name: trimmed, kind, favorite });
+    await upsertStore({ name: trimmed, kind, address, favorite });
     name = '';
+    address = '';
     favorite = false;
     message = `「${trimmed}」を追加しました`;
     await load();
   }
 
   async function toggleFavorite(s: Store) {
-    await upsertStore({ id: s.id, name: s.name, shortName: s.shortName, kind: s.kind, favorite: s.favorite === 0, area: s.area, url: s.url, memo: s.memo });
+    await upsertStore({ id: s.id, name: s.name, shortName: s.shortName, kind: s.kind, favorite: s.favorite === 0, area: s.area, address: s.address, memo: s.memo });
     await load();
   }
 
@@ -125,7 +133,7 @@
       shortName: editing.shortName,
       kind: editing.kind,
       area: editing.area,
-      url: editing.url,
+      address: editing.address,
       favorite: editing.favorite === 1,
       memo: editing.memo,
     });
@@ -193,6 +201,11 @@
         </div>
       {/if}
     {/if}
+    <input
+      class="mt-2 w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500"
+      placeholder="住所（任意・例: 東京都千代田区外神田1-15-16）"
+      bind:value={address}
+    />
     <div class="mt-2 grid grid-cols-2 gap-2">
       <div class="grid grid-cols-2 gap-0.5 rounded-lg bg-slate-200 p-0.5">
         {#each [['store', '実店舗'], ['online', '通販']] as [k, label] (k)}
@@ -266,6 +279,17 @@
               {/if}
               {#if store.archivedAt}・アーカイブ{/if}
             </p>
+            {#if store.address}
+              <div class="mt-0.5 flex items-center gap-1.5">
+                <p class="text-[9px] text-slate-500 truncate">{store.address}</p>
+                <a
+                  class="shrink-0 text-[9px] font-bold text-emerald-700 underline underline-offset-2"
+                  href={mapUrl(store.address)}
+                  target="_blank"
+                  rel="noreferrer"
+                >地図</a>
+              </div>
+            {/if}
           </div>
           <button
             class="h-8 px-2 rounded-lg border border-slate-300 text-[10px] font-bold text-slate-600"
@@ -372,18 +396,19 @@
       </label>
 
       <label class="block">
-        <span class="text-[10px] text-slate-500">URL</span>
+        <span class="text-[10px] text-slate-500">住所</span>
         <input
           class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]"
-          placeholder="https://…"
-          bind:value={editing.url}
+          placeholder="例: 東京都千代田区外神田1-15-16"
+          bind:value={editing.address}
         />
       </label>
 
       <label class="block">
-        <span class="text-[10px] text-slate-500">メモ（住所など）</span>
+        <span class="text-[10px] text-slate-500">メモ</span>
         <input
           class="mt-0.5 w-full h-9 px-2 rounded-lg border border-slate-300 text-[13px]"
+          placeholder="営業時間・フロアなど"
           bind:value={editing.memo}
         />
       </label>

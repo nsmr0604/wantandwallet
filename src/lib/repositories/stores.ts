@@ -1,5 +1,6 @@
 import { db, newId } from '../db/schema';
 import type { Store } from '../domain/types';
+import { cleanAddress } from '../domain/stores';
 
 export async function listStores(includeArchived = false): Promise<Store[]> {
   const rows = await db.stores.filter((s) => !s.deletedAt).toArray();
@@ -20,7 +21,7 @@ export async function upsertStore(input: {
   catalogId?: string;
   kind: 'store' | 'online';
   area?: string;
-  url?: string;
+  address?: string;
   favorite?: boolean;
   memo?: string;
 }): Promise<Store> {
@@ -40,7 +41,7 @@ export async function upsertStore(input: {
       catalogId: existing.catalogId ?? input.catalogId,
       kind: input.kind,
       area: input.area,
-      url: input.url,
+      address: input.address?.trim() || undefined,
       favorite: input.favorite ? 1 : 0,
       memo: input.memo,
       updatedAt: now,
@@ -56,7 +57,7 @@ export async function upsertStore(input: {
     catalogId: input.catalogId,
     kind: input.kind,
     area: input.area,
-    url: input.url,
+    address: input.address?.trim() || undefined,
     favorite: input.favorite ? 1 : 0,
     sortOrder: 0,
     memo: input.memo,
@@ -79,9 +80,22 @@ export async function restoreStore(id: string): Promise<void> {
   await db.stores.update(id, { archivedAt: undefined, updatedAt: Date.now() });
 }
 
-/** 既存の店舗が公式カタログの店名と一致したら catalog 由来として記録する */
-export async function markStoreAsCatalog(id: string, catalogId: string): Promise<void> {
+/** 既存の店舗が公式カタログの店舗と一致したら、出典と住所を取り込む */
+export async function applyCatalogStore(
+  id: string,
+  catalogId: string,
+  address?: string,
+): Promise<void> {
   const s = await db.stores.get(id);
-  if (!s || s.source) return;
-  await db.stores.update(id, { source: 'catalog', catalogId, updatedAt: Date.now() });
+  if (!s) return;
+  const cleaned = address ? cleanAddress(address, s.name) : '';
+  const patch: Partial<Store> = { updatedAt: Date.now() };
+  if (!s.source) {
+    patch.source = 'catalog';
+    patch.catalogId = catalogId;
+  }
+  if (cleaned && s.address !== cleaned) patch.address = cleaned;
+  // 以前は住所をメモに入れていたため、重複を解消する
+  if (cleaned && s.memo === address) patch.memo = '';
+  await db.stores.update(id, patch);
 }
