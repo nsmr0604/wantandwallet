@@ -8,12 +8,14 @@
   import { upsertManualCard } from '../lib/repositories/cards';
   import { takePendingDraft } from '../lib/purchaseDraft.svelte';
   import type { Card, Purchase, Settings, Store } from '../lib/domain/types';
+  import type { ReleaseProduct } from '../lib/domain/releases';
 
   let purchases = $state<Purchase[]>([]);
   let cards = $state<Record<string, Card>>({});
   let stores = $state<Store[]>([]);
   let wish = $state<WishRow[]>([]);
   let settings = $state<Settings | null>(null);
+  let releaseProducts = $state<ReleaseProduct[]>([]);
   let loading = $state(true);
   let tab = $state<'all' | 'reserved' | 'bought'>('all');
   let showForm = $state(false);
@@ -28,6 +30,7 @@
     quantity: 1,
     packPrice: 0,
     boxPrice: 0,
+    productPacksPerBox: 0,
     shipping: 0,
     storeId: '',
     status: 'bought' as 'bought' | 'reserved',
@@ -44,6 +47,15 @@
     stores = await listStores();
     wish = await listWish();
     settings = await ensureSettings();
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/releases.json`);
+      if (res.ok) {
+        const json = (await res.json()) as { products: ReleaseProduct[] };
+        releaseProducts = json.products ?? [];
+      }
+    } catch {
+      releaseProducts = [];
+    }
     if (!form.storeId && stores[0]) form.storeId = stores[0].id;
     loading = false;
   }
@@ -77,8 +89,47 @@
     (p.cardId && cards[p.cardId]?.nameJa) || p.productKey || '（不明）';
 
   const packsPerBox = $derived(settings?.defaultPacksPerBox ?? 30);
+  const productMap = $derived.by(() => {
+    const map = new Map<string, ReleaseProduct>();
+    for (const p of releaseProducts) map.set(p.name, p);
+    for (const p of purchases) {
+      if (p.itemType !== 'sealed' || !p.productKey || map.has(p.productKey)) continue;
+      map.set(p.productKey, {
+        name: p.productKey,
+        date: '',
+        kind: '',
+        url: '',
+        priceUnit: p.unit === 'box' ? 'box' : 'pack',
+        price: p.unitPrice,
+        packsPerBox: p.packsPerUnit ?? null,
+        cardsPerPack: null,
+      });
+    }
+    return map;
+  });
+  const productOptions = $derived(
+    [...productMap.keys()].sort((a, b) => a.localeCompare(b, 'ja')),
+  );
+  const effectivePacksPerBox = $derived(form.productPacksPerBox || packsPerBox);
+
+  function onProduct(name: string) {
+    form.productName = name;
+    const p = productMap.get(name);
+    if (!p) return;
+    if (p.packsPerBox) form.productPacksPerBox = p.packsPerBox;
+    if (p.priceUnit) form.unitMode = p.priceUnit;
+    if (p.priceUnit === 'box' && p.price) {
+      form.boxPrice = p.price;
+      if (p.packsPerBox) form.packPrice = Math.round(p.price / p.packsPerBox);
+    } else if (p.price) {
+      form.packPrice = p.price;
+      if (p.packsPerBox) form.boxPrice = p.price * p.packsPerBox;
+    }
+    if (p.date) form.expectedAt = p.date;
+  }
+
   const formPackCount = $derived(
-    form.unitMode === 'box' ? form.quantity * packsPerBox : form.quantity,
+    form.unitMode === 'box' ? form.quantity * effectivePacksPerBox : form.quantity,
   );
   const formUnitPrice = $derived(
     form.itemType === 'sealed'
@@ -124,7 +175,7 @@
         productKey: name,
         unit: form.unitMode,
         qty: form.quantity,
-        packsPerUnit: form.unitMode === 'box' ? packsPerBox : 1,
+        packsPerUnit: form.unitMode === 'box' ? effectivePacksPerBox : 1,
         totalPacks: formPackCount,
         unitPrice: formUnitPrice,
         shipping: form.shipping,
@@ -225,11 +276,25 @@
         </div>
       {:else}
         <div class="space-y-2">
-          <input
-            class="w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px]"
-            placeholder="商品名（例: QUARTER CENTURY CHRONICLE）"
-            bind:value={form.productName}
-          />
+          <select
+            class="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white text-[12px]"
+            value={form.productName}
+            onchange={(e) => onProduct(e.currentTarget.value)}
+          >
+            <option value="">商品を選択してください</option>
+            {#each productOptions as name (name)}
+              <option value={name}>{name}</option>
+            {/each}
+          </select>
+          {#if productOptions.length === 0}
+            <p class="text-[9px] text-amber-700">
+              商品データがありません（npm run fetch:releases で生成）
+            </p>
+          {:else}
+            <p class="text-[9px] text-slate-400">
+              定価・パック数は商品から自動入力されます（実際の支払額に合わせて単価を修正できます）
+            </p>
+          {/if}
           <div class="grid grid-cols-2 gap-0.5 rounded-lg bg-slate-200 p-0.5">
             <button
               class="h-9 rounded-md text-[11px] font-bold"
@@ -270,7 +335,7 @@
             </label>
           </div>
           <p class="text-[10px] text-slate-500">
-            購入パック数 {formPackCount}（1BOX {packsPerBox} パック）
+            購入パック数 {formPackCount}（1BOX {effectivePacksPerBox} パック）
           </p>
           <button
             class="w-full h-10 rounded-xl border p-2 text-left text-[11px] font-bold"
