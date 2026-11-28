@@ -12,7 +12,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name wantandwallet --branch main",
+    "deploy:preview": "npm run build && wrangler pages deploy dist --project-name wantandwallet"
   },
   "repository": {
     "type": "git",
@@ -38,7 +40,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.4.0",
     "vite-plugin-pwa": "^2.0.0",
-    "vitest": "^5.1.2"
+    "vitest": "^5.1.2",
+    "wrangler": "^4.169.0"
   },
   "dependencies": {
     "dexie": "^4.4.7",

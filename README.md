@@ -25,6 +25,7 @@
 | [docs/05-decisions.md](docs/05-decisions.md) | 決定事項ログ（ADR）・未決事項 |
 | [docs/06-process.md](docs/06-process.md) | 開発プロセス（モックアップ型 × スパイラル型） |
 | [docs/07-wireframes-s0.md](docs/07-wireframes-s0.md) | 画面遷移（状態遷移図）とワイヤー |
+| [docs/08-deployment.md](docs/08-deployment.md) | Cloudflare Pages へのデプロイ・エージェント設定 |
 | `mockups/s0/` | S0 の L1 モック（Svelte・表示専用） |
 
 ## 現在のステータス
