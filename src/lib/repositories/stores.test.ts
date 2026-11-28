@@ -39,4 +39,22 @@ describe('stores repository', () => {
     expect(row.name).toBe('PAO 秋葉原');
     expect(row.favorite).toBe(1);
   });
+
+  it('公式カタログ由来の店舗は正式名を変更できず、別名だけ変えられる', async () => {
+    const s = await upsertStore({
+      name: 'カードショップ竜星のPAO 秋葉原ロケット無線店',
+      kind: 'store',
+      source: 'catalog',
+      catalogId: 'node/1',
+    });
+    await upsertStore({
+      id: s.id,
+      name: '書き換えた名前',
+      shortName: 'PAO 秋葉原',
+      kind: 'store',
+    });
+    const [row] = await listStores();
+    expect(row.name).toBe('カードショップ竜星のPAO 秋葉原ロケット無線店');
+    expect(row.shortName).toBe('PAO 秋葉原');
+  });
 });

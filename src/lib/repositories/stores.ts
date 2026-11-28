@@ -16,6 +16,8 @@ export async function upsertStore(input: {
   id?: string;
   name: string;
   shortName?: string;
+  source?: 'catalog' | 'manual';
+  catalogId?: string;
   kind: 'store' | 'online';
   area?: string;
   url?: string;
@@ -28,10 +30,14 @@ export async function upsertStore(input: {
   if (input.id) {
     const existing = await db.stores.get(input.id);
     if (!existing) throw new Error('店舗が見つかりません');
+    const locked = existing.source === 'catalog';
     const next: Store = {
       ...existing,
-      name,
+      // 公式店舗の正式名は変更しない
+      name: locked ? existing.name : name,
       shortName: input.shortName?.trim() || undefined,
+      source: existing.source ?? input.source,
+      catalogId: existing.catalogId ?? input.catalogId,
       kind: input.kind,
       area: input.area,
       url: input.url,
@@ -46,6 +52,8 @@ export async function upsertStore(input: {
     id: newId(),
     name,
     shortName: input.shortName?.trim() || undefined,
+    source: input.source ?? 'manual',
+    catalogId: input.catalogId,
     kind: input.kind,
     area: input.area,
     url: input.url,
@@ -69,4 +77,11 @@ export async function archiveStore(id: string): Promise<void> {
 
 export async function restoreStore(id: string): Promise<void> {
   await db.stores.update(id, { archivedAt: undefined, updatedAt: Date.now() });
+}
+
+/** 既存の店舗が公式カタログの店名と一致したら catalog 由来として記録する */
+export async function markStoreAsCatalog(id: string, catalogId: string): Promise<void> {
+  const s = await db.stores.get(id);
+  if (!s || s.source) return;
+  await db.stores.update(id, { source: 'catalog', catalogId, updatedAt: Date.now() });
 }

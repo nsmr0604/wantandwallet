@@ -6,6 +6,7 @@
     touchStore,
     archiveStore,
     restoreStore,
+    markStoreAsCatalog,
   } from '../lib/repositories/stores';
   import type { Store } from '../lib/domain/types';
   import { filterShops, type ShopRecord } from '../lib/domain/shops';
@@ -33,7 +34,19 @@
       const res = await fetch(`${import.meta.env.BASE_URL}data/shops.json`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as { shops: ShopRecord[] };
-      catalog = json.shops ?? [];
+      const list = json.shops ?? [];
+      catalog = list;
+      // 既存店舗が公式名と一致するなら catalog 由来としてロック対象にする
+      let changed = false;
+      for (const st of stores) {
+        if (st.source) continue;
+        const hit = list.find((c) => c.name === st.name);
+        if (hit) {
+          await markStoreAsCatalog(st.id, hit.id);
+          changed = true;
+        }
+      }
+      if (changed) await load();
     } catch {
       catalogError =
         '店舗データを読み込めませんでした。scripts/fetch-konami-shops.mjs で生成してください。';
@@ -50,6 +63,8 @@
     await upsertStore({
       name: s.name,
       kind: 'store',
+      source: 'catalog',
+      catalogId: s.id,
       area: s.state || '',
       url: s.url || '',
       memo: s.address,
@@ -64,7 +79,10 @@
     loading = false;
   }
 
-  onMount(load);
+  onMount(async () => {
+    await load();
+    await ensureCatalog();
+  });
 
   async function add() {
     const trimmed = name.trim();
@@ -300,11 +318,19 @@
       </div>
 
       <label class="block">
-        <span class="text-[10px] text-slate-500">店舗名（正式名）</span>
+        <span class="text-[10px] text-slate-500">
+          店舗名（正式名）{editing.source === 'catalog' ? '・変更不可' : ''}
+        </span>
         <input
-          class="mt-0.5 w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500"
+          class="mt-0.5 w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-500"
           bind:value={editing.name}
+          disabled={editing.source === 'catalog'}
         />
+        {#if editing.source === 'catalog'}
+          <span class="mt-0.5 block text-[9px] text-slate-400">
+            公式店舗の正式名は変更できません。表示を短くするには「短い別名」を使ってください。
+          </span>
+        {/if}
       </label>
 
       <label class="block">

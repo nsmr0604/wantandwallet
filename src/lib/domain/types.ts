@@ -27,6 +27,9 @@ export interface Store {
   name: string;
   /** 表示用の短い別名（未設定なら name を使う） */
   shortName?: string;
+  /** catalog = 公式店舗検索から追加（正式名は編集不可） */
+  source?: 'catalog' | 'manual';
+  catalogId?: string;
   kind: 'store' | 'online';
   area?: string;
   url?: string;
