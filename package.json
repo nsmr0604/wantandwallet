@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "deploy": "npm run build && wrangler deploy",
     "fetch:shops": "node scripts/fetch-konami-shops.mjs",
-    "fetch:shops:osm": "node scripts/fetch-shops.mjs"
+    "fetch:shops:osm": "node scripts/fetch-shops.mjs",
+    "fetch:cards": "node --max-old-space-size=4096 scripts/build-card-index.mjs"
   },
   "repository": {
     "type": "git",

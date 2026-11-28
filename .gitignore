@@ -27,6 +27,8 @@ knowledge/
 
 # 実在店舗データ（Konami から取得・再配布しない）
 public/data/shops.json
+# カード索引（yaml-yugi から生成・再配布しない）
+public/data/cards-index.json
 
 # wrangler / Cloudflare
 .wrangler/

@@ -31,3 +31,32 @@ export async function upsertManualCard(name: string): Promise<Card> {
   await db.cards.add(card);
   return card;
 }
+
+/** カード索引（yaml-yugi）からカードを登録する。同名は既存を返す */
+export async function upsertCardFromIndex(hit: {
+  konamiId?: string;
+  passcode?: string;
+  nameJa: string;
+  nameEn?: string;
+  cardType?: string;
+  kana?: string;
+}): Promise<Card> {
+  const norm = normalizeName(hit.nameJa);
+  if (!norm) throw new Error('カード名が空です');
+  const existing = await db.cards.where('nameNorm').equals(norm).first();
+  if (existing) return existing;
+  const card: Card = {
+    id: newId(),
+    konamiId: hit.konamiId,
+    passcode: hit.passcode,
+    nameJa: hit.nameJa,
+    nameNorm: norm,
+    nameKana: hit.kana,
+    nameEn: hit.nameEn,
+    cardType: hit.cardType,
+    source: 'yaml-yugi',
+    updatedAt: Date.now(),
+  };
+  await db.cards.add(card);
+  return card;
+}
