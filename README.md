@@ -30,10 +30,11 @@
 
 ## 現在のステータス
 
-- フェーズ: **S0（基盤）実装済み — S1 準備**
+- フェーズ: **S0（基盤）完了 — 公開 URL 稼働中**
+- 公開 URL: **https://wantandwallet.nsmr0604.workers.dev**
 - 画面設計: S0 モック v0.3 承認済み（`mockups/s0/`）
-- 実装: 画面骨格・ハッシュルーター・Dexie スキーマ・domain 計算・CI・PWA まで
-- 未了: Cloudflare Pages へのデプロイ、実機でのオフライン確認（S0 の残り）
+- 実装: 画面骨格・ハッシュルーター・Dexie スキーマ・domain 計算・CI・PWA・Cloudflare デプロイ
+- 未了: 実機でのホーム画面追加／機内モード確認、CI からの自動デプロイ
 
 ## 開発
 

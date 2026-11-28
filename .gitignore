@@ -24,3 +24,9 @@ Thumbs.db
 
 # 個人ナレッジ（OKF・非公開）
 knowledge/
+
+# wrangler / Cloudflare
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+!.env.example

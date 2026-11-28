@@ -13,8 +13,7 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test:watch": "vitest",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name wantandwallet --branch main",
-    "deploy:preview": "npm run build && wrangler pages deploy dist --project-name wantandwallet"
+    "deploy": "npm run build && wrangler deploy"
   },
   "repository": {
     "type": "git",
@@ -28,8 +27,9 @@
     "url": "https://github.com/nsmr0604/wantandwallet/issues"
   },
   "homepage": "https://github.com/nsmr0604/wantandwallet#readme",
-  "private": "true",
+  "private": true,
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.2",
     "@sveltejs/vite-plugin-svelte": "^7.3.2",
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "^26.6.11",

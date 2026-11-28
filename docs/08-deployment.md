@@ -1,37 +1,35 @@
 ---
-title: wantandwallet デプロイ（Cloudflare Pages）
-version: 0.1
+title: wantandwallet デプロイ（Cloudflare）
+version: 0.2
 status: draft
 updated: 2026-11-28
 ---
 
 # 1. 構成
 
-- ホスティング: **Cloudflare Pages**
+- ホスティング: **Cloudflare（Pages の最新版 = Workers 上の静的アセット）**
+- URL: **https://wantandwallet.nsmr0604.workers.dev**
 - プロジェクト名: `wantandwallet`
-- ビルド: `npm run build`
-- 出力: `dist/`
-- 本番ブランチ: `main`
-- ルーティング: ハッシュ（`#/wish`）なので `_redirects` は不要
+- 設定: `wrangler.jsonc`（assets の SPA フォールバック、observability）
+- ビルド: `npm run build`（`@cloudflare/vite-plugin` が `dist/wrangler.json` を生成）
+- ルーティング: ハッシュ（`#/wish`）なので追加のリダイレクト不要
 
-# 2. ローカルからデプロイ
+# 2. デプロイ
 
 ```powershell
-npm run deploy          # build → wrangler pages deploy（main）
-npm run deploy:preview  # build → プレビューデプロイ
+npm run deploy    # build → wrangler deploy
 ```
 
-初回のみ `wrangler login`（OAuth）が必要。
-`wrangler` は devDependencies に含める（バージョン固定）。
+- 初回のみ `wrangler login`（OAuth）
+- `wrangler.jsonc` が正で、`wrangler deploy` が assets をアップロードする
+- 旧 Pages 直デプロイ（`wrangler pages deploy`）は不要。互換のため残すなら `--force` が要る
 
 # 3. CI からデプロイ（将来）
 
 `main` への push で自動デプロイする場合、GitHub リポジトリに次の Secrets を登録する。
 
-- `CLOUDFLARE_API_TOKEN`（Pages:Edit 権限）
+- `CLOUDFLARE_API_TOKEN`（Workers Scripts:Edit / Pages:Edit）
 - `CLOUDFLARE_ACCOUNT_ID`
-
-ワークフロー例:
 
 ```yaml
 - run: npm ci
@@ -40,7 +38,7 @@ npm run deploy:preview  # build → プレビューデプロイ
   with:
     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    command: pages deploy dist --project-name wantandwallet --branch main
+    command: deploy
 ```
 
 # 4. エージェント環境（Cloudflare 公式セットアップ）
@@ -51,8 +49,8 @@ npm run deploy:preview  # build → プレビューデプロイ
 | --- | --- |
 | Skills | `npx -y skills add cloudflare/skills --skill '*' --yes --global` → `~/.agents/skills` |
 | MCP | `~/.config/opencode/opencode.json` の `mcp.servers.cloudflare`（`https://mcp.cloudflare.com/mcp`, OAuth） |
-| 認証 | `opencode-cli mcp auth cloudflare`（初回はブラウザで承認） |
-| 反映 | MCP は**エージェント再起動後**に利用可能 |
+| 認証 | `opencode-cli mcp auth cloudflare` → 完了（`Connected to cloudflare`） |
+| 反映 | MCP は**エージェント再起動後**に利用可能（3053 ツール） |
 
 # 5. 確認
 

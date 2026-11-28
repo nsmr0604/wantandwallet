@@ -183,5 +183,5 @@ flowchart LR
 3. [x] レビュー: 承認を `05-decisions.md` に記録（D-38）
 4. [x] 実装: Vite + Svelte 5 + TypeScript、Tailwind 4、PWA、ハッシュルーター、9 画面
 5. [x] Dexie v1 スキーマ＋Repository（カード・欲しい）、domain の単体テスト 18 件
-6. [x] CI（typecheck / test / build） ／ [ ] Cloudflare Pages へデプロイ
+6. [x] CI（typecheck / test / build） ／ [x] Cloudflare へデプロイ（https://wantandwallet.nsmr0604.workers.dev）
 7. [ ] 実機でホーム画面追加 → 機内モード起動を確認（K-01 の初期判定）
