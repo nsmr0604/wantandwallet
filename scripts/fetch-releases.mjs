@@ -4,6 +4,7 @@
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 
 const LIST = 'https://www.yugioh-card.com/japan/products/';
+const DB_LIST = 'https://www.db.yugioh-card.com/yugiohdb/card_list.action?request_locale=ja';
 const UA = 'wantandwallet/0.1 (personal releases)';
 
 const decode = (s) =>
@@ -44,6 +45,49 @@ const html = await get(LIST);
 const objects = [...html.matchAll(/p\[\d+\]\s*=\s*(\{[\s\S]*?\});/g)].map((m) => m[1]);
 console.log(`products in list: ${objects.length}`);
 
+// 公式カードDBの商品一覧（日本語名・カテゴリ）
+let dbRows = [];
+try {
+  const dbHtml = await get(DB_LIST);
+  const blocks = dbHtml.split('<div class="t_row').slice(1);
+  for (const b of blocks) {
+    const d = /<div class="time">\s*([^<]+?)\s*<\/div>/.exec(b);
+    const c = /<span class="ws_nowrap">【([^】]+)】<\/span>/.exec(b);
+    const n = /<p>([\s\S]*?)<\/p>/.exec(b);
+    if (!d || !n) continue;
+    const full = decode(n[1].replace(/<[^>]+>/g, '').trim());
+    const m = /^(.*?)\s*\[([^\]]+)\]\s*$/.exec(full);
+    dbRows.push({
+      date: d[1].trim().replaceAll('/', '-'),
+      category: c ? c[1] : '',
+      nameJa: m ? m[1].trim() : full,
+      nameEn: m ? m[2].trim() : '',
+    });
+  }
+  console.log(`db products: ${dbRows.length}`);
+} catch (e) {
+  console.warn(`db list failed: ${e.message}`);
+}
+
+const key = (s) =>
+  s
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u3040-\u30ff\u4e00-\u9fff]/g, '');
+const dbByEn = new Map();
+for (const row of dbRows) {
+  if (row.nameEn) dbByEn.set(key(row.nameEn), row);
+}
+
+const kindToCategory = {
+  基本パック: '基本ブースターパック',
+  コンセプトパック: 'その他ブースターパック',
+  スペシャルパック: 'その他ブースターパック',
+  構築済みデッキ: '構築済みデッキ',
+  スペシャルセット: '商品同梱',
+  デュエリストアイテム: 'グッズ',
+};
+
 const products = [];
 for (const raw of objects) {
   let obj;
@@ -57,10 +101,14 @@ for (const raw of objects) {
   if (!name) continue;
   const date = parseDate(obj['release-date']);
   const price = parsePrice(obj['price-intax']);
+  const kind = decode(obj['class-name'] ?? '');
+  const db = dbByEn.get(key(name));
   const item = {
     name,
+    nameJa: db?.nameJa ?? '',
+    category: db?.category ?? kindToCategory[kind] ?? kind,
     date,
-    kind: decode(obj['class-name'] ?? ''),
+    kind,
     detail: obj.detail ?? '',
     url: obj.url ? `https://www.yugioh-card.com/japan/products/${obj.url}/` : '',
     priceUnit: price.unit,

@@ -9,7 +9,7 @@
   import { takePendingDraft } from '../lib/purchaseDraft.svelte';
   import type { Card, Purchase, Settings, Store } from '../lib/domain/types';
   import type { ReleaseProduct } from '../lib/domain/releases';
-  import { pickableProducts } from '../lib/domain/releases';
+  import { pickableProducts, productLabel } from '../lib/domain/releases';
 
   let purchases = $state<Purchase[]>([]);
   let cards = $state<Record<string, Card>>({});
@@ -21,6 +21,7 @@
   let tab = $state<'all' | 'reserved' | 'bought'>('all');
   let showForm = $state(false);
   let message = $state('');
+  let catFilter = $state('all');
 
   const blankForm = () => ({
     itemType: 'card' as 'card' | 'sealed',
@@ -87,7 +88,10 @@
   const list = $derived(tab === 'all' ? purchases : purchases.filter((p) => p.status === tab));
 
   const cardName = (p: Purchase) =>
-    (p.cardId && cards[p.cardId]?.nameJa) || p.productKey || '（不明）';
+    (p.itemType === 'sealed' && p.productKey && labelFor(p.productKey)) ||
+    (p.cardId && cards[p.cardId]?.nameJa) ||
+    p.productKey ||
+    '（不明）';
 
   const packsPerBox = $derived(settings?.defaultPacksPerBox ?? 30);
   const productMap = $derived.by(() => {
@@ -121,9 +125,17 @@
       seen.add(name);
       names.push(name);
     }
-    return names;
+    return names.filter((n) => catFilter === 'all' || categoryOf(n) === catFilter);
   });
   const effectivePacksPerBox = $derived(form.productPacksPerBox || packsPerBox);
+  const categoryOf = (name: string) => productMap.get(name)?.category || 'その他';
+  const categories = $derived(
+    [...new Set(releaseProducts.map((p) => p.category).filter((c): c is string => !!c))],
+  );
+  const labelFor = (name: string) => {
+    const p = productMap.get(name);
+    return p ? productLabel(p) : name;
+  };
 
   function onProduct(name: string) {
     form.productName = name;
@@ -289,6 +301,34 @@
         </div>
       {:else}
         <div class="space-y-2">
+          <div class="flex gap-1.5 overflow-x-auto pb-1">
+            <button
+              class="shrink-0 h-7 px-2.5 rounded-full border text-[10px] font-medium"
+              class:bg-slate-900={catFilter === 'all'}
+              class:text-white={catFilter === 'all'}
+              class:border-slate-900={catFilter === 'all'}
+              class:bg-white={catFilter !== 'all'}
+              class:text-slate-600={catFilter !== 'all'}
+              class:border-slate-200={catFilter !== 'all'}
+              onclick={() => (catFilter = 'all')}
+            >
+              すべて
+            </button>
+            {#each categories as c (c)}
+              <button
+                class="shrink-0 h-7 px-2.5 rounded-full border text-[10px] font-medium"
+                class:bg-slate-900={catFilter === c}
+                class:text-white={catFilter === c}
+                class:border-slate-900={catFilter === c}
+                class:bg-white={catFilter !== c}
+                class:text-slate-600={catFilter !== c}
+                class:border-slate-200={catFilter !== c}
+                onclick={() => (catFilter = c)}
+              >
+                {c}
+              </button>
+            {/each}
+          </div>
           <select
             class="w-full h-10 px-2 rounded-lg border border-slate-300 bg-white text-[12px]"
             value={form.productName}
@@ -296,7 +336,7 @@
           >
             <option value="">商品を選択してください</option>
             {#each productOptions as name (name)}
-              <option value={name}>{name}</option>
+              <option value={name}>{labelFor(name)}</option>
             {/each}
           </select>
           {#if productOptions.length === 0}

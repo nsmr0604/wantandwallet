@@ -64,9 +64,10 @@
       <li class="rounded-2xl bg-white border border-slate-200 p-3">
         <div class="flex items-start gap-2">
           <div class="min-w-0 flex-1">
-            <p class="text-[12px] font-bold text-slate-900 leading-snug">{p.name}</p>
+            <p class="text-[12px] font-bold text-slate-900 leading-snug">{p.nameJa || p.name}</p>
             <p class="mt-0.5 text-[10px] text-slate-500">
-              {p.date.replaceAll('-', '/')}・{p.kind}
+              {#if p.nameJa && p.nameJa !== p.name}<span class="text-slate-400">{p.name}・</span>{/if}
+              {p.date.replaceAll('-', '/')}・{p.category || p.kind}
             </p>
             <p class="mt-1 text-[11px] text-slate-700">
               {priceLabel(p)}

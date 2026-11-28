@@ -1,5 +1,7 @@
 export interface ReleaseProduct {
   name: string;
+  nameJa?: string;
+  category?: string;
   date: string;
   kind: string;
   url: string;
@@ -37,6 +39,13 @@ export function past(products: ReleaseProduct[], now: Date = new Date()): Releas
   return products
     .filter((p) => p.date && p.date < today)
     .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** 表示用の商品名（日本語名があれば併記） */
+export function productLabel(p: Pick<ReleaseProduct, 'name' | 'nameJa'>): string {
+  const ja = p.nameJa?.trim();
+  if (!ja || ja === p.name) return p.name;
+  return `${ja} [${p.name}]`;
 }
 
 /** 商品選択用: 今後（発売日昇順）→ 発売済み（新しい順） */

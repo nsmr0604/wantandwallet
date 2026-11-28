@@ -5,6 +5,7 @@ import {
   isCardProduct,
   past,
   pickableProducts,
+  productLabel,
   todayJst,
   upcoming,
   type ReleaseProduct,
@@ -51,6 +52,24 @@ describe('todayJst', () => {
   it('UTC 15:00 をまたぐと日本時間の日付になる', () => {
     expect(todayJst(new Date('2026-11-27T14:59:00Z'))).toBe('2026-11-27');
     expect(todayJst(new Date('2026-11-27T15:00:00Z'))).toBe('2026-11-28');
+  });
+});
+
+describe('productLabel', () => {
+  it('日本語名があれば英語名を併記', () => {
+    expect(productLabel({ name: 'BEYOND THE BRAVE', nameJa: 'ビヨンド・ザ・ブレイブ' })).toBe(
+      'ビヨンド・ザ・ブレイブ [BEYOND THE BRAVE]',
+    );
+  });
+
+  it('日本語名が無ければ英語名のみ', () => {
+    expect(productLabel({ name: 'PRIDE AND SOUL' })).toBe('PRIDE AND SOUL');
+  });
+
+  it('日本語名が英語名と同じなら重複させない', () => {
+    expect(productLabel({ name: 'PREMIUM PACK 2026', nameJa: 'PREMIUM PACK 2026' })).toBe(
+      'PREMIUM PACK 2026',
+    );
   });
 });
 
