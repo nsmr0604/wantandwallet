@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test:watch": "vitest",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "fetch:shops": "node scripts/fetch-konami-shops.mjs",
+    "fetch:shops:osm": "node scripts/fetch-shops.mjs"
   },
   "repository": {
     "type": "git",

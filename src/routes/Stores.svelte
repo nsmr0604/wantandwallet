@@ -8,6 +8,7 @@
     restoreStore,
   } from '../lib/repositories/stores';
   import type { Store } from '../lib/domain/types';
+  import { filterShops, type ShopRecord } from '../lib/domain/shops';
 
   let stores = $state<Store[]>([]);
   let loading = $state(true);
@@ -16,6 +17,45 @@
   let kind = $state<'store' | 'online'>('store');
   let favorite = $state(false);
   let message = $state('');
+
+  // 実在店舗カタログ（Konami カードゲームネットワーク）
+  let catalog = $state<ShopRecord[] | null>(null);
+  let catalogError = $state('');
+  let catalogLoading = $state(false);
+  let shopQuery = $state('');
+  let searchOpen = $state(false);
+
+  async function openSearch() {
+    searchOpen = !searchOpen;
+    if (!searchOpen || catalog) return;
+    catalogLoading = true;
+    catalogError = '';
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/shops.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = (await res.json()) as { shops: ShopRecord[] };
+      catalog = json.shops ?? [];
+    } catch {
+      catalogError =
+        '店舗データがありません。scripts/fetch-konami-shops.mjs を実行して public/data/shops.json を生成してください。';
+    } finally {
+      catalogLoading = false;
+    }
+  }
+
+  const shopResults = $derived(catalog ? filterShops(catalog, shopQuery, 30) : []);
+
+  async function addFromCatalog(s: ShopRecord) {
+    await upsertStore({
+      name: s.name,
+      kind: 'store',
+      area: s.state || '',
+      url: s.url || '',
+      memo: s.address,
+    });
+    message = `「${s.name}」を店舗に追加しました`;
+    await load();
+  }
 
   async function load() {
     stores = await listStores(showArchived);
@@ -95,6 +135,67 @@
       追加する
     </button>
   </div>
+
+  <button
+    class="w-full rounded-2xl bg-white border border-slate-200 p-4 flex items-center gap-2 text-left"
+    onclick={openSearch}
+  >
+    <div class="min-w-0 flex-1">
+      <p class="text-[12px] font-bold text-slate-800">実在店舗を検索</p>
+      <p class="text-[10px] text-slate-500">Konami カードゲームネットワークの店舗検索から追加</p>
+    </div>
+    <span class="text-[10px] text-slate-500">{searchOpen ? '閉じる' : '開く'}</span>
+  </button>
+
+  {#if searchOpen}
+    <div class="rounded-2xl bg-white border border-slate-200 p-4 space-y-2">
+      <input
+        class="w-full h-10 px-2 rounded-lg border border-slate-300 text-[13px] outline-none focus:border-emerald-500"
+        placeholder="店名・住所で検索（例: 秋葉原 / カードラッシュ）"
+        bind:value={shopQuery}
+      />
+
+      {#if catalogLoading}
+        <p class="text-[11px] text-slate-400 py-3 text-center">読み込み中…</p>
+      {:else if catalogError}
+        <p class="text-[10px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">
+          {catalogError}
+        </p>
+      {:else}
+        <p class="text-[10px] text-slate-500">
+          {catalog?.length ?? 0} 店舗中 {shopResults.length} 件を表示
+        </p>
+        <ul class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+          {#each shopResults as s (s.id)}
+            {@const added = stores.some((st) => st.name === s.name)}
+            <li class="py-2 flex items-start gap-2">
+              <div class="min-w-0 flex-1">
+                <p class="text-[12px] font-bold text-slate-900 truncate">{s.name}</p>
+                <p class="text-[10px] text-slate-500 truncate">{s.address || s.state}</p>
+              </div>
+              <button
+                class="shrink-0 h-8 px-2 rounded-lg text-[10px] font-bold"
+                class:bg-emerald-600={!added}
+                class:text-white={!added}
+                class:bg-slate-100={added}
+                class:text-slate-400={added}
+                disabled={added}
+                onclick={() => addFromCatalog(s)}
+              >
+                {added ? '追加済み' : '追加'}
+              </button>
+            </li>
+          {/each}
+        </ul>
+        {#if shopResults.length === 0}
+          <p class="text-[10px] text-slate-400 py-2">該当する店舗がありません</p>
+        {/if}
+        <p class="text-[9px] text-slate-400">
+          出典: Konami カードゲームネットワーク 店舗検索（個人利用の範囲で取得）
+        </p>
+      {/if}
+    </div>
+  {/if}
 
   {#if message}
     <p class="rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1.5 text-[10px] text-emerald-800">

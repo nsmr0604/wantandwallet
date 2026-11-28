@@ -25,6 +25,9 @@ Thumbs.db
 # 個人ナレッジ（OKF・非公開）
 knowledge/
 
+# 実在店舗データ（Konami から取得・再配布しない）
+public/data/shops.json
+
 # wrangler / Cloudflare
 .wrangler/
 .dev.vars*
